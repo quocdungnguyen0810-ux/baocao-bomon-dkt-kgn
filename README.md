@@ -1,5 +1,9 @@
 # Hệ Thống Tác Tử Tự Động Hóa Báo Cáo Công Việc & Đồng Bộ uSmart (TB 940/TB-ĐHGTVT)
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=quocdungnguyen0810-ux/baocao-bomon-dkt-kgn&branch=main&mainModule=streamlit_app.py)
+
+- **Kho mã nguồn GitHub (Cloud Deploy)**: `https://github.com/quocdungnguyen0810-ux/baocao-bomon-dkt-kgn`
+- **Link kích hoạt 1-Click trên Streamlit Community Cloud (Miễn phí 100%)**: `https://share.streamlit.io/deploy?repository=quocdungnguyen0810-ux/baocao-bomon-dkt-kgn&branch=main&mainModule=streamlit_app.py`
 - **Đơn vị áp dụng**: Bộ môn Địa kỹ thuật và Không gian ngầm (Mã đơn vị: `412`) – Khoa Công trình – Trường Đại học Giao thông Vận tải (UTC)
 - **Trưởng Bộ môn (Người nhận báo cáo Mẫu 01)**: GS.TS. Trần Thế Truyền (Mã CB: `0694`)
 - **Phó Trưởng Bộ môn (Phụ trách đồng bộ KHCN)**: PGS.TS. Nguyễn Châu Lân (Mã CB: `0882`, TK uSmart: `lannc`)
