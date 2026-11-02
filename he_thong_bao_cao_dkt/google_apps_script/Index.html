@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Báo cáo Công việc Bộ môn ĐKT & KGN (TB 940)</title>
+  <style>
+    body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; margin: 12px; color: #1e293b; background: #f8fafc; }
+    .banner { background: linear-gradient(135deg, #0f2d59, #1d4ed8); color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+    .banner h1 { font-size: 15px; margin: 0 0 4px 0; }
+    .banner p { font-size: 11.5px; margin: 0; color: #e2e8f0; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    h2 { font-size: 14.5px; margin: 0 0 8px 0; color: #0f172a; }
+    label { display: block; font-size: 12px; font-weight: 600; margin-top: 8px; color: #475569; }
+    select, input { width: 100%; padding: 7px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; }
+    .btn { display: block; width: 100%; padding: 9px; margin-top: 8px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; box-sizing: border-box; }
+    .btn-primary { background: #1d4ed8; color: #fff; }
+    .btn-sec { background: #e2e8f0; color: #1e293b; }
+    .btn-success { background: #15803d; color: #fff; }
+    #status { font-size: 12.5px; margin-top: 10px; padding: 8px; border-radius: 5px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <h1>📊 Báo cáo Bộ môn ĐKT & KGN (TB 940)</h1>
+    <p>Trường ĐH Giao thông vận tải (UTC) • Trưởng BM: GS.TS. Trần Thế Truyền</p>
+  </div>
+
+  <div class="card">
+    <h2>🗂️ Kiểu lựa chọn báo cáo & Vị trí lưu</h2>
+    <label>Nhóm biểu mẫu báo cáo & theo dõi</label>
+    <select id="loai_bao_cao">
+      <optgroup label="1. Báo cáo công việc cá nhân (Mẫu 01)">
+        <option value="01a">Mẫu 01a — Báo cáo kết quả công việc tuần (BC tuần)</option>
+        <option value="01b" selected>Mẫu 01b — Báo cáo công việc tháng & tự chấm điểm (BC tháng)</option>
+      </optgroup>
+      <optgroup label="2. Giao việc và theo dõi nhiệm vụ (Mẫu 03)">
+        <option value="03a">Mẫu 03a — Phiếu giao việc & nghiệm thu</option>
+        <option value="03b">Mẫu 03b — Sổ giao việc và theo dõi 20 cột</option>
+        <option value="03c">Mẫu 03c — Tổng hợp kết quả theo người (21 GV)</option>
+      </optgroup>
+      <optgroup id="optgroup_don_vi_admin" label="3. Báo cáo công việc đơn vị (Mẫu 02 - Chỉ Admin)" style="display:none;" disabled>
+        <option value="02a">Mẫu 02a — Báo cáo kết quả công việc tuần của đơn vị</option>
+        <option value="02b">Mẫu 02b — Báo cáo kết quả công việc tháng của đơn vị</option>
+        <option value="02c">Mẫu 02c — Bảng theo dõi & chấm điểm tháng 21 GV</option>
+      </optgroup>
+    </select>
+
+    <label>📂 Vị trí lưu file báo cáo xuất ra</label>
+    <select id="vi_tri_luu" onchange="doiViTriLuu()">
+      <option value="drive_bomon">☁️ Thư mục Google Drive Bộ môn (1jawTokjmk-hnBsuoEIHoxYUhSRCEItPd)</option>
+      <option value="local_download">💻 Tải trực tiếp về máy tính (Chọn thư mục Save As...)</option>
+      <option value="custom_folder">✍️ Tự nhập đường dẫn / Folder ID tùy chỉnh...</option>
+    </select>
+    <input type="text" id="custom_save_path" placeholder="Nhập đường dẫn thư mục hoặc Google Drive Folder ID..." style="display:none;">
+
+    <label>Kỳ báo cáo (Tháng / Năm)</label>
+    <div style="display:flex; gap:8px;">
+      <input type="number" id="thang" value="11" min="1" max="12">
+      <input type="number" id="nam" value="2026" min="2025" max="2030">
+    </div>
+    <label>Giảng viên (Bộ môn ĐKT & KGN)</label>
+    <select id="ma_cb">
+      <option value="1051">1051 - ThS. Nguyễn Hải Hà</option>
+      <option value="0694">0694 - GS.TS. Trần Thế Truyền (Trưởng BM)</option>
+      <option value="0882">0882 - PGS.TS. Nguyễn Châu Lân (Phó TBM)</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Tác vụ Thực thi Báo cáo</h2>
+    <button class="btn btn-sec" onclick="chaySaoChep()">🔄 Sao chép công việc lặp lại</button>
+    <button class="btn btn-sec" onclick="chayChuyenTiep()">⏪ Chuyển việc chưa hoàn thành</button>
+    <button class="btn btn-primary" onclick="chayKiemTra()">🔍 Kiểm tra Ràng buộc Vật lý</button>
+    <a class="btn btn-success" href="https://usmart.utc.edu.vn/baocaocongviec/" target="_blank">🚀 Mở Cổng Nộp Báo cáo uSmart</a>
+    <a class="btn btn-sec" href="https://drive.google.com/drive/folders/1jawTokjmk-hnBsuoEIHoxYUhSRCEItPd" target="_blank">📂 Mở Thư mục Drive Minh chứng</a>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>🛡️ Đăng nhập Quản trị viên (Admin)</h2>
+    <label>Tài khoản Admin</label>
+    <input type="text" id="admin_user" placeholder="admin / lannc / truyentt">
+    <label>Mật khẩu Admin</label>
+    <input type="password" id="admin_pass" placeholder="Nhập mật khẩu Admin...">
+    <button class="btn btn-sec" onclick="dangNhapAdmin()">🔐 Mở khóa Báo cáo Đơn vị & Admin</button>
+
+    <div id="admin_panel" style="display:none; margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+      <h2>🏛️ Báo cáo Đơn vị (Mẫu 02) & Đồng bộ Dữ liệu Nguồn (Chỉ Admin)</h2>
+      <button class="btn btn-primary" onclick="chayDongBoNCKHAdmin()">🔬 Đồng bộ Kế hoạch NCKH & NCKHSV từ uSmart</button>
+      <button class="btn btn-sec" onclick="chaySaoChepToanBoMon()">🔄 Sao chép việc lặp lại cho toàn bộ 21 GV</button>
+      <button class="btn btn-sec" onclick="chayChuyenTiepToanBoMon()">⏪ Chuyển việc chưa xong cho toàn bộ 21 GV</button>
+    </div>
+  </div>
+
+  <script>
+    var isAdminLogged = false;
+    function doiViTriLuu() {
+      var v = document.getElementById("vi_tri_luu").value;
+      document.getElementById("custom_save_path").style.display = (v === "custom_folder") ? "block" : "none";
+    }
+    function hienThongBao(msg, isError) {
+      var el = document.getElementById("status");
+      el.style.display = "block";
+      el.style.background = isError ? "#fee2e2" : "#dcfce7";
+      el.style.color = isError ? "#991b1b" : "#166534";
+      el.innerText = msg;
+    }
+    function dangNhapAdmin() {
+      var u = (document.getElementById("admin_user").value || "").trim().toLowerCase();
+      var p = (document.getElementById("admin_pass").value || "").trim();
+      var optDonVi = document.getElementById("optgroup_don_vi_admin");
+      if ((u === "admin" && p === "dkt412@admin") ||
+          (u === "truyentt" && p === "dkt412@admin") ||
+          (u === "lannc" && (p === "giangchau0310" || p === "giangchau"))) {
+        isAdminLogged = true;
+        document.getElementById("admin_panel").style.display = "block";
+        optDonVi.style.display = "";
+        optDonVi.disabled = false;
+        hienThongBao("Đã mở khóa Module Báo cáo Đơn vị (Mẫu 02) & Đồng bộ dữ liệu (Admin)!", false);
+      } else {
+        isAdminLogged = false;
+        document.getElementById("admin_panel").style.display = "none";
+        optDonVi.style.display = "none";
+        optDonVi.disabled = true;
+        hienThongBao("Tài khoản hoặc mật khẩu Admin không hợp lệ!", true);
+      }
+    }
+    function chayDongBoNCKHAdmin() {
+      if (!isAdminLogged) return;
+      hienThongBao("Đang đồng bộ dữ liệu NCKH & NCKHSV từ uSmart...", false);
+      google.script.run.withSuccessHandler(function(res) {
+        hienThongBao("Đã đồng bộ " + res.so_de_tai_cac_cap + " ĐT các cấp & " + res.so_de_tai_nckhsv + " ĐT NCKHSV!", false);
+      }).dongBoKeHoachNCKHTuUSmart();
+    }
+    function chaySaoChepToanBoMon() {
+      if (!isAdminLogged) return;
+      var t = Number(document.getElementById("thang").value);
+      var n = Number(document.getElementById("nam").value);
+      google.script.run.withSuccessHandler(function(res) {
+        hienThongBao("[Admin] Đã sao chép " + res.so_ban_ghi + " việc lặp lại cho toàn Bộ môn!", false);
+      }).saoChepCongViecLapLai(t, n, null);
+    }
+    function chayChuyenTiepToanBoMon() {
+      if (!isAdminLogged) return;
+      var t = Number(document.getElementById("thang").value);
+      var n = Number(document.getElementById("nam").value);
+      var tTr = t === 1 ? 12 : t - 1;
+      var nTr = t === 1 ? n - 1 : n;
+      google.script.run.withSuccessHandler(function(res) {
+        hienThongBao("[Admin] Đã chuyển tiếp " + res.so_chuyen_tiep + " việc chưa xong cho toàn Bộ môn!", false);
+      }).chuyenViecChuaXong(tTr, nTr, t, n, null);
+    }
+    function chaySaoChep() {
+      var t = Number(document.getElementById("thang").value);
+      var n = Number(document.getElementById("nam").value);
+      var mcb = document.getElementById("ma_cb").value || null;
+      google.script.run.withSuccessHandler(function(res) {
+        hienThongBao("Đã sao chép " + res.so_ban_ghi + " công việc lặp lại!", false);
+      }).saoChepCongViecLapLai(t, n, mcb);
+    }
+    function chayChuyenTiep() {
+      var t = Number(document.getElementById("thang").value);
+      var n = Number(document.getElementById("nam").value);
+      var tTr = t === 1 ? 12 : t - 1;
+      var nTr = t === 1 ? n - 1 : n;
+      var mcb = document.getElementById("ma_cb").value || null;
+      google.script.run.withSuccessHandler(function(res) {
+        hienThongBao("Đã chuyển tiếp " + res.so_chuyen_tiep + " việc chưa xong (giữ nguyên hạn gốc)!", false);
+      }).chuyenViecChuaXong(tTr, nTr, t, n, mcb);
+    }
+    function chayKiemTra() {
+      google.script.run.withSuccessHandler(function(dsLoi) {
+        if (dsLoi.length === 0) hienThongBao("Kiểm toán ĐẠT 100%! Không có lỗi.", false);
+        else hienThongBao("Phát hiện " + dsLoi.length + " cảnh báo/lỗi cần rà soát.", true);
+      }).kiemTraDuLieuToanBoSheet();
+    }
+  </script>
+</body>
+</html>

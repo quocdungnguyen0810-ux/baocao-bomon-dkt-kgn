@@ -1,0 +1,20 @@
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Temporary Office lock files
+~$*
+*.tmp
+*.bak
+
+# Archive files
+*.rar
+*.zip
+
+# Streamlit local secrets
+.streamlit/secrets.toml
