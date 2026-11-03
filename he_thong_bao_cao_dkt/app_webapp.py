@@ -170,6 +170,25 @@ def thiet_lap_css_chuyen_nghiep() -> None:
             border-radius: 999px;
             font-size: 0.85rem;
         }
+        .utc-footer {
+            margin-top: 36px;
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-top: 2px solid #cbd5e1;
+            border-radius: 8px;
+            text-align: center;
+            color: #1e293b;
+            font-size: 0.92rem;
+            font-weight: 500;
+        }
+        .utc-footer a {
+            color: #1d4ed8;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .utc-footer a:hover {
+            text-decoration: underline;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -1324,6 +1343,15 @@ def main() -> None:
             nckh_user=nckh_user,
             nckh_pass=nckh_pass,
         )
+
+    # Chân trang (Footer) cố định ở cuối giao diện Webapp
+    st.markdown(
+        "<div class='utc-footer'>"
+        "📧 Email: <b>Nguyễn Hải Hà_Bộ môn Địa kỹ thuật và không gian ngầm</b> "
+        "(<a href='mailto:haihadkt@utc.edu.vn'>haihadkt@utc.edu.vn</a>)"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":
