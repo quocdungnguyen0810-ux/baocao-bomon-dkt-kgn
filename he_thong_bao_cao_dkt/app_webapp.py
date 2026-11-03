@@ -189,10 +189,154 @@ def thiet_lap_css_chuyen_nghiep() -> None:
         .utc-footer a:hover {
             text-decoration: underline;
         }
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 10px 0 14px 0;
+        }
+        @media (max-width: 992px) {
+            .roadmap-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .roadmap-card {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-top: 4px solid #1d4ed8;
+            border-radius: 8px;
+            padding: 12px 12px;
+            box-shadow: 0 2px 6px rgba(15, 45, 89, 0.06);
+        }
+        .roadmap-step-badge {
+            display: inline-block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            margin-bottom: 6px;
+        }
+        .roadmap-card h4 {
+            color: #0f2d59 !important;
+            font-size: 0.95rem !important;
+            margin: 0 0 6px 0 !important;
+            font-weight: 700 !important;
+        }
+        .roadmap-card p {
+            color: #334155 !important;
+            font-size: 0.83rem !important;
+            line-height: 1.42 !important;
+            margin: 0 !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+
+def hien_thi_so_do_roadmap_huong_dan(is_admin: bool = False) -> None:
+    """Hiển thị Sơ đồ Lộ trình (Roadmap) hướng dẫn sử dụng trực quan từng bước cho giảng viên Bộ môn ĐKT & KGN."""
+    with st.expander(
+        "🗺️ SƠ ĐỒ LỘ TRÌNH HƯỚNG DẪN SỬ DỤNG NHANH CHO GIẢNG VIÊN BỘ MÔN ĐỊA KỸ THUẬT & KGN (5 BƯỚC — 2 PHÚT)",
+        expanded=False,
+    ):
+        st.markdown(
+            """
+            <div class='roadmap-grid'>
+                <div class='roadmap-card'>
+                    <span class='roadmap-step-badge'>BƯỚC 1 • THANH BÊN TRÁI</span>
+                    <h4>👤 Chọn Giảng viên & Kỳ</h4>
+                    <p>
+                        1. Chọn <b>Tháng / Năm</b> báo cáo.<br>
+                        2. Chọn đúng <b>Mã CB - Họ và tên</b> trong danh sách 21 GV.<br>
+                        3. Chọn <b>Vị trí lưu file</b> mong muốn.
+                    </p>
+                </div>
+                <div class='roadmap-card'>
+                    <span class='roadmap-step-badge'>BƯỚC 2 • LOẠI BÁO CÁO</span>
+                    <h4>🗂️ Chọn Mẫu Tuần / Tháng</h4>
+                    <p>
+                        • Chọn <b>📄 1. Báo cáo công việc cá nhân</b>:<br>
+                        &nbsp;&nbsp;↳ <b>📅 Mẫu 01a</b>: Báo cáo Tuần.<br>
+                        &nbsp;&nbsp;↳ <b>📆 Mẫu 01b</b>: Báo cáo Tháng.<br>
+                        • Hoặc <b>📋 2. Giao việc (Mẫu 03)</b>.
+                    </p>
+                </div>
+                <div class='roadmap-card'>
+                    <span class='roadmap-step-badge'>BƯỚC 3 • MỤC I.2 NHIỆM VỤ</span>
+                    <h4>☑️ Tích chọn & Sửa việc</h4>
+                    <p>
+                        • Tích <b>☑️ Sử dụng</b> việc trong kỳ hoặc bật lấy việc cũ để dùng lại.<br>
+                        • Sửa trực tiếp <b>Nguồn giao, Thời hạn, Ngày HT, % HT</b>.<br>
+                        • Tích <b>⭐ Trọng tâm ĐV</b> nếu là việc chính của Bộ môn.
+                    </p>
+                </div>
+                <div class='roadmap-card'>
+                    <span class='roadmap-step-badge'>BƯỚC 4 • MỤC II, III, IV & LƯU</span>
+                    <h4>💾 Tự chấm điểm & Lưu</h4>
+                    <p>
+                        • Kiểm tra giờ <b>Giảng dạy, NCKH</b> (Mục II).<br>
+                        • Nhập <b>Điểm tự chấm</b> (Mục III: TC chung ≤30, KQ NV ≤70).<br>
+                        • Bấm nút <b>💾 Lưu toàn bộ thay đổi vào CSDL</b>.
+                    </p>
+                </div>
+                <div class='roadmap-card'>
+                    <span class='roadmap-step-badge'>BƯỚC 5 • XUẤT FILE & NỘP</span>
+                    <h4>📥 Tải File / Nộp uSmart</h4>
+                    <p>
+                        • Bấm <b>📊 Xuất Excel (.xlsx)</b> hoặc <b>📝 Xuất Word (.docx)</b> rồi bấm <b>⬇️ Tải trực tiếp về máy</b>.<br>
+                        • Hoặc bấm <b>🚀 Nộp lên uSmart</b>.
+                    </p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("##### 🔄 Sơ đồ luồng thực hiện & kế thừa dữ liệu tự động trong Bộ môn")
+        st.markdown(
+            """
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:12px;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; text-align:center;">
+                    <div style="flex:1; min-width:150px; background:#dbeafe; border:1.5px solid #2563eb; border-radius:8px; padding:10px;">
+                        <b style="color:#1e3a8a;">1️⃣ KHỞI ĐẦU</b><br>
+                        <span style="font-size:0.82rem; color:#1e293b;">Chọn Tên Giảng viên<br>& Kỳ Tháng/Năm</span>
+                    </div>
+                    <div style="font-size:1.3rem; font-weight:bold; color:#2563eb;">➔</div>
+                    <div style="flex:1; min-width:150px; background:#e0f2fe; border:1.5px solid #0284c7; border-radius:8px; padding:10px;">
+                        <b style="color:#0c4a6e;">2️⃣ CHỌN BIỂU MẪU</b><br>
+                        <span style="font-size:0.82rem; color:#1e293b;">Mẫu 01a (BC Tuần)<br>Mẫu 01b (BC Tháng)</span>
+                    </div>
+                    <div style="font-size:1.3rem; font-weight:bold; color:#0284c7;">➔</div>
+                    <div style="flex:1; min-width:170px; background:#fef3c7; border:1.5px solid #d97706; border-radius:8px; padding:10px;">
+                        <b style="color:#78350f;">3️⃣ RÀ SOÁT & CHẤM ĐIỂM</b><br>
+                        <span style="font-size:0.82rem; color:#1e293b;">Tích ☑️ Sử dụng / 🔁 Tiếp tục<br>Sửa Ngày HT, Điểm, ⭐ Trọng tâm</span>
+                    </div>
+                    <div style="font-size:1.3rem; font-weight:bold; color:#d97706;">➔</div>
+                    <div style="flex:1; min-width:150px; background:#dcfce7; border:1.5px solid #16a34a; border-radius:8px; padding:10px;">
+                        <b style="color:#14532d;">4️⃣ LƯU DỮ LIỆU</b><br>
+                        <span style="font-size:0.82rem; color:#1e293b;">Bấm 💾 Lưu vào CSDL<br>(Tự động cộng vào Mẫu 02/03)</span>
+                    </div>
+                    <div style="font-size:1.3rem; font-weight:bold; color:#16a34a;">➔</div>
+                    <div style="flex:1; min-width:150px; background:#ede9fe; border:1.5px solid #7c3aed; border-radius:8px; padding:10px;">
+                        <b style="color:#4c1d95;">5️⃣ HOÀN TẤT</b><br>
+                        <span style="font-size:0.82rem; color:#1e293b;">⬇️ Tải file .xlsx / .docx<br>& 🚀 Nộp lên uSmart</span>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.info(
+            "⏰ **Mốc thời gian quy định (Thông báo số 940/TB-ĐHGTVT):**  \n"
+            "- **Báo cáo Tuần (Mẫu 01a):** Hoàn thành trước **16h00 chiều Thứ Sáu** hàng tuần.  \n"
+            "- **Báo cáo Tháng Cá nhân (Mẫu 01b):** Giảng viên hoàn thành từ **ngày 25 đến hết ngày 02 tháng kế tiếp**.  \n"
+            "- **Báo cáo Tháng Đơn vị (Mẫu 02b, 02c - Dành cho Trưởng Bộ môn / Admin):** Tổng hợp và duyệt từ **ngày 02 đến ngày 05 tháng kế tiếp**."
+        )
 
 
 def _chuan_bi_dong_nhiem_vu_editor(bc, ds_viec_goi_y, ngay_moc_han: date) -> list[dict]:
@@ -1291,6 +1435,7 @@ def main() -> None:
 
     # Danh sách Kiểu lựa chọn báo cáo:
     # Module Báo cáo đơn vị (Mẫu 02) và Module Đồng bộ dữ liệu nguồn CHỈ hiển thị với tài khoản Admin
+    hien_thi_so_do_roadmap_huong_dan(is_admin)
     cac_kieu_bao_cao = lay_danh_sach_kieu_bao_cao_theo_quyen(is_admin)
 
     kieu_bao_cao_chon = st.radio(
