@@ -252,7 +252,8 @@ def hien_thi_so_do_roadmap_huong_dan(is_admin: bool = False) -> None:
                     <p>
                         1. Chọn <b>Tháng / Năm</b> báo cáo.<br>
                         2. Chọn đúng <b>Mã CB - Họ và tên</b> trong danh sách 21 GV.<br>
-                        3. Chọn <b>Vị trí lưu file</b> mong muốn.
+                        3. Chọn <b>Vị trí lưu file</b> mong muốn.<br>
+                        4. <b>Nhập tài khoản uSmart (tùy chọn)</b> để link trực tiếp đến module Báo cáo công việc cá nhân trên <a href="https://usmart.utc.edu.vn/baocaocongviec/" target="_blank"><b>uSmart</b></a>.
                     </p>
                 </div>
                 <div class='roadmap-card'>
@@ -284,11 +285,12 @@ def hien_thi_so_do_roadmap_huong_dan(is_admin: bool = False) -> None:
                     </p>
                 </div>
                 <div class='roadmap-card'>
-                    <span class='roadmap-step-badge'>BƯỚC 5 • XUẤT FILE & NỘP</span>
+                    <span class='roadmap-step-badge'>BƯỚC 5 • XUẤT FILE & NỘP USMART</span>
                     <h4>📥 Tải File / Nộp uSmart</h4>
                     <p>
-                        • Bấm <b>📊 Xuất Excel (.xlsx)</b> hoặc <b>📝 Xuất Word (.docx)</b> rồi bấm <b>⬇️ Tải trực tiếp về máy</b>.<br>
-                        • Hoặc bấm <b>🚀 Nộp lên uSmart</b>.
+                        • <b>Xuất file:</b> Bấm <b>📊 Xuất Excel</b> / <b>📝 Xuất Word</b> ➔ <b>⬇️ Tải về máy</b>.<br>
+                        • <b>Nộp lên uSmart (Nhập dữ liệu tự động sang uSmart):</b><br>
+                        &nbsp;&nbsp;↳ Mở <a href="https://usmart.utc.edu.vn/baocaocongviec/" target="_blank"><b>🔗 Cổng Báo cáo uSmart</b></a> ➔ <b>Giao diện Báo cáo cá nhân</b> ➔ Chọn <b>Nhập Web</b> ➔ <b>Kiểm tra và Nộp báo cáo</b>.
                     </p>
                 </div>
             </div>
@@ -301,29 +303,32 @@ def hien_thi_so_do_roadmap_huong_dan(is_admin: bool = False) -> None:
             """
             <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:12px;">
                 <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; text-align:center;">
-                    <div style="flex:1; min-width:150px; background:#dbeafe; border:1.5px solid #2563eb; border-radius:8px; padding:10px;">
+                    <div style="flex:1; min-width:155px; background:#dbeafe; border:1.5px solid #2563eb; border-radius:8px; padding:10px;">
                         <b style="color:#1e3a8a;">1️⃣ KHỞI ĐẦU</b><br>
-                        <span style="font-size:0.82rem; color:#1e293b;">Chọn Tên Giảng viên<br>& Kỳ Tháng/Năm</span>
+                        <span style="font-size:0.81rem; color:#1e293b;">Chọn GV, Kỳ, Vị trí lưu<br>+ Nhập TK uSmart (tùy chọn)</span>
                     </div>
                     <div style="font-size:1.3rem; font-weight:bold; color:#2563eb;">➔</div>
-                    <div style="flex:1; min-width:150px; background:#e0f2fe; border:1.5px solid #0284c7; border-radius:8px; padding:10px;">
+                    <div style="flex:1; min-width:145px; background:#e0f2fe; border:1.5px solid #0284c7; border-radius:8px; padding:10px;">
                         <b style="color:#0c4a6e;">2️⃣ CHỌN BIỂU MẪU</b><br>
-                        <span style="font-size:0.82rem; color:#1e293b;">Mẫu 01a (BC Tuần)<br>Mẫu 01b (BC Tháng)</span>
+                        <span style="font-size:0.81rem; color:#1e293b;">Mẫu 01a (BC Tuần)<br>Mẫu 01b (BC Tháng)</span>
                     </div>
                     <div style="font-size:1.3rem; font-weight:bold; color:#0284c7;">➔</div>
-                    <div style="flex:1; min-width:170px; background:#fef3c7; border:1.5px solid #d97706; border-radius:8px; padding:10px;">
+                    <div style="flex:1; min-width:165px; background:#fef3c7; border:1.5px solid #d97706; border-radius:8px; padding:10px;">
                         <b style="color:#78350f;">3️⃣ RÀ SOÁT & CHẤM ĐIỂM</b><br>
-                        <span style="font-size:0.82rem; color:#1e293b;">Tích ☑️ Sử dụng / 🔁 Tiếp tục<br>Sửa Ngày HT, Điểm, ⭐ Trọng tâm</span>
+                        <span style="font-size:0.81rem; color:#1e293b;">Tích ☑️ Sử dụng / 🔁 Tiếp tục<br>Sửa Ngày HT, Điểm, ⭐ Trọng tâm</span>
                     </div>
                     <div style="font-size:1.3rem; font-weight:bold; color:#d97706;">➔</div>
-                    <div style="flex:1; min-width:150px; background:#dcfce7; border:1.5px solid #16a34a; border-radius:8px; padding:10px;">
+                    <div style="flex:1; min-width:145px; background:#dcfce7; border:1.5px solid #16a34a; border-radius:8px; padding:10px;">
                         <b style="color:#14532d;">4️⃣ LƯU DỮ LIỆU</b><br>
-                        <span style="font-size:0.82rem; color:#1e293b;">Bấm 💾 Lưu vào CSDL<br>(Tự động cộng vào Mẫu 02/03)</span>
+                        <span style="font-size:0.81rem; color:#1e293b;">Bấm 💾 Lưu vào CSDL<br>(Tự động cộng vào Mẫu 02/03)</span>
                     </div>
                     <div style="font-size:1.3rem; font-weight:bold; color:#16a34a;">➔</div>
-                    <div style="flex:1; min-width:150px; background:#ede9fe; border:1.5px solid #7c3aed; border-radius:8px; padding:10px;">
-                        <b style="color:#4c1d95;">5️⃣ HOÀN TẤT</b><br>
-                        <span style="font-size:0.82rem; color:#1e293b;">⬇️ Tải file .xlsx / .docx<br>& 🚀 Nộp lên uSmart</span>
+                    <div style="flex:1.25; min-width:190px; background:#ede9fe; border:1.5px solid #7c3aed; border-radius:8px; padding:10px;">
+                        <b style="color:#4c1d95;">5️⃣ XUẤT FILE & NỘP USMART</b><br>
+                        <span style="font-size:0.80rem; color:#1e293b;">
+                            ⬇️ Tải .xlsx/.docx & Đẩy tự động sang uSmart:<br>
+                            <a href="https://usmart.utc.edu.vn/baocaocongviec/" target="_blank" style="color:#5b21b6; font-weight:700;">🔗 Mở Cổng Báo cáo uSmart</a> ➔ Giao diện BC cá nhân ➔ Chọn <b>Nhập Web</b> ➔ Kiểm tra & Nộp
+                        </span>
                     </div>
                 </div>
             </div>
@@ -743,6 +748,11 @@ def hien_thi_phan_he_giang_vien(
             agent = USmartBaoCaoAgent(usmart_user, usmart_pass)
             kq_u = agent.gui_bao_cao_webform(bc, ky_id="1", ma_mau="01a", che_do="luu_nhap")
             st.info(kq_u.thong_bao)
+        st.caption(
+            "👉 **Quy trình nộp lên uSmart (Nhập dữ liệu tự động sang uSmart):** "
+            "Mở [🔗 **Cổng Báo cáo uSmart**](https://usmart.utc.edu.vn/baocaocongviec/) "
+            "➔ **Giao diện Báo cáo cá nhân** ➔ Chọn **Nhập Web** ➔ **Kiểm tra và Nộp báo cáo**."
+        )
         return
 
     # =========================================================================
@@ -1172,6 +1182,14 @@ def hien_thi_phan_he_giang_vien(
     # Khu vực gửi trực tiếp lên uSmart
     st.divider()
     st.subheader("🚀 Gửi trực tiếp Báo cáo Công việc Tháng (Mẫu 01b) lên Hệ thống uSmart (`usmart.utc.edu.vn/baocaocongviec/`)")
+    st.markdown(
+        "📌 **Lộ trình nộp lên uSmart (Nhập dữ liệu tự động sang uSmart):**  \n"
+        "1. Bấm một trong các nút đồng bộ tự động bên dưới ➔ "
+        "2. Mở [**🔗 Cổng Báo cáo uSmart (`https://usmart.utc.edu.vn/baocaocongviec/`)**](https://usmart.utc.edu.vn/baocaocongviec/) ➔ "
+        "3. Vào **Giao diện Báo cáo cá nhân** ➔ "
+        "4. Chọn **Nhập Web** ➔ "
+        "5. **Kiểm tra và Nộp báo cáo**."
+    )
     u1, u2, u3 = st.columns(3)
     if u1.button("☁️ Lưu nháp trực tiếp lên uSmart (An toàn)", use_container_width=True):
         agent = USmartBaoCaoAgent(usmart_user, usmart_pass)
