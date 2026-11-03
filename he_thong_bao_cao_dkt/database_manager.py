@@ -278,7 +278,7 @@ class QuanLyCSDLBộMôn:
                     70.0,
                     None,
                     None,
-                    "Đề nghị Nhà trường và Khoa tiếp tục hỗ trợ kinh phí bảo dưỡng định kỳ thiết bị thí nghiệm ba trục và cố kết tự động.",
+                    "",
                 ]
             )
 

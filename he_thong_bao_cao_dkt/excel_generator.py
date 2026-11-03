@@ -181,8 +181,9 @@ class BoSinhBaoCaoExcel:
             c_th_kh.number_format = "dd/mm/yyyy"
             ws_thang.cell(r, 8, kh.ghi_chu).font = normal_font
 
-        # Mục V. Đề xuất, kiến nghị (Ô A67:M67)
-        ws_thang["A67"] = bao_cao.de_xuat_kien_nghi
+        # Mục V. Đề xuất, kiến nghị (Ô A67:M67) - xóa chữ mẫu mặc định nếu để trống
+        ws_thang["A67"] = bao_cao.de_xuat_kien_nghi or ""
+        ws_thang["A67"].font = normal_font
         ngay_ky = bao_cao.ngay_ky_bao_cao or bao_cao.ngay_cuoi_ky
         ws_thang["G69"] = f"Hà Nội, ngày {ngay_ky.day:02d} tháng {ngay_ky.month:02d} năm {ngay_ky.year}"
 
@@ -244,7 +245,8 @@ class BoSinhBaoCaoExcel:
                 c_th_kh.number_format = "dd/mm/yyyy"
                 ws_tuan.cell(r, 8, kh.ghi_chu).font = normal_font
 
-            ws_tuan["A49"] = bao_cao.de_xuat_kien_nghi
+            ws_tuan["A49"] = bao_cao.de_xuat_kien_nghi or ""
+            ws_tuan["A49"].font = normal_font
             ws_tuan["G51"] = f"Hà Nội, ngày {ngay_ky.day:02d} tháng {ngay_ky.month:02d} năm {ngay_ky.year}"
 
             dv_nguon_w = DataValidation(type="list", formula1="='Danh mục'!$A$2:$A$6", allow_blank=True)
@@ -376,9 +378,14 @@ class BoSinhBaoCaoExcel:
             c_th_kh.number_format = "dd/mm/yyyy"
             ws_02b.cell(r, 10, kh.san_pham_du_kien).font = normal_font
 
-        # Mục V. Đề xuất kiến nghị của đơn vị (Dòng 70..73)
-        ws_02b.cell(70, 2, "Bảo dưỡng, hiệu chuẩn định kỳ thiết bị thí nghiệm Cơ học đất – Địa kỹ thuật").font = normal_font
-        ws_02b.cell(70, 5, "Đề nghị Nhà trường bố trí kinh phí bảo dưỡng định kỳ phục vụ đào tạo và kiểm định mở ngành").font = normal_font
+        # Mục V. Đề xuất kiến nghị của đơn vị (Dòng 70..73) - xóa ví dụ mẫu, không tự động sinh kiến nghị mặc định
+        from openpyxl.cell.cell import MergedCell as _MergedCell02b
+        for r in range(70, 74):
+            for c_idx in (2, 5):
+                c_dx = ws_02b.cell(r, c_idx)
+                if not isinstance(c_dx, _MergedCell02b):
+                    c_dx.value = None
+                    c_dx.font = normal_font
 
         dv_nguon_02b = DataValidation(type="list", formula1="='Danh mục'!$A$2:$A$6", allow_blank=True)
         dv_tt_02b = DataValidation(type="list", formula1="='Danh mục'!$B$2:$B$6", allow_blank=True)
@@ -481,14 +488,13 @@ class BoSinhBaoCaoExcel:
                         if c_idx == 8:
                             cell.number_format = "dd/mm/yyyy"
 
-            for c_idx, val in (
-                (2, "Bảo dưỡng, hiệu chuẩn định kỳ thiết bị thí nghiệm Cơ học đất – Địa kỹ thuật"),
-                (5, "Đề nghị Nhà trường bố trí kinh phí bảo dưỡng định kỳ phục vụ đào tạo và kiểm định mở ngành"),
-            ):
-                cell = ws_02a.cell(57, c_idx)
-                if not isinstance(cell, MergedCell):
-                    cell.value = val
-                    cell.font = normal_font
+            # Mục IV. Đề xuất kiến nghị của đơn vị (Dòng 56..60) - xóa ví dụ mẫu, không tự động sinh kiến nghị mặc định
+            for r in range(56, 61):
+                for c_idx in (2, 5):
+                    cell = ws_02a.cell(r, c_idx)
+                    if not isinstance(cell, MergedCell):
+                        cell.value = None
+                        cell.font = normal_font
 
             dv_nguon_02a = DataValidation(type="list", formula1="='Danh mục'!$A$2:$A$6", allow_blank=True)
             dv_tt_02a = DataValidation(type="list", formula1="='Danh mục'!$B$2:$B$6", allow_blank=True)

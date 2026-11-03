@@ -303,13 +303,7 @@ def hien_thi_bao_cao_don_vi_mau_02(
         # Mục IV. Đề xuất, kiến nghị cần lãnh đạo Trường cho ý kiến
         st.subheader("IV. ĐỀ XUẤT, KIẾN NGHỊ CẦN LÃNH ĐẠO TRƯỜNG CHO Ý KIẾN")
         st.data_editor(
-            [
-                {
-                    "tt": 1,
-                    "noi_dung": "Bảo dưỡng, hiệu chuẩn định kỳ thiết bị thí nghiệm Cơ học đất – Địa kỹ thuật",
-                    "phuong_an": "Đề nghị Nhà trường bố trí kinh phí bảo dưỡng định kỳ phục vụ đào tạo và kiểm định mở ngành",
-                }
-            ],
+            [],
             key=f"ed_dx_02a_{thang}_{nam}",
             use_container_width=True,
             num_rows="dynamic",
@@ -479,13 +473,7 @@ def hien_thi_bao_cao_don_vi_mau_02(
         # Mục V. Đề xuất, kiến nghị cần lãnh đạo Trường cho ý kiến
         st.subheader("V. ĐỀ XUẤT, KIẾN NGHỊ CẦN LÃNH ĐẠO TRƯỜNG CHO Ý KIẾN")
         st.data_editor(
-            [
-                {
-                    "tt": 1,
-                    "noi_dung": "Bảo dưỡng, hiệu chuẩn định kỳ thiết bị thí nghiệm Cơ học đất – Địa kỹ thuật",
-                    "phuong_an": "Đề nghị Nhà trường bố trí kinh phí bảo dưỡng định kỳ phục vụ đào tạo và kiểm định mở ngành",
-                }
-            ],
+            [],
             key=f"ed_dx_02b_{thang}_{nam}",
             use_container_width=True,
             num_rows="dynamic",

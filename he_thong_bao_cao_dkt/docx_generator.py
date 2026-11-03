@@ -261,7 +261,7 @@ class BoSinhBaoCaoDocx:
         # Mục V. Đề xuất, kiến nghị & Chữ ký
         p_m5 = doc.add_paragraph()
         p_m5.add_run("V. ĐỀ XUẤT, KIẾN NGHỊ: ").bold = True
-        p_m5.add_run(bao_cao.de_xuat_kien_nghi or "Không.")
+        p_m5.add_run(bao_cao.de_xuat_kien_nghi or "")
 
         ngay_ky = bao_cao.ngay_ky_bao_cao or bao_cao.ngay_cuoi_ky
         tbl_ky = doc.add_table(rows=1, cols=2)
