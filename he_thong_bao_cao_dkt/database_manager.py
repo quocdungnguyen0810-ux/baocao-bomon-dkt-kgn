@@ -771,6 +771,26 @@ class QuanLyCSDLBộMôn:
                 "Bộ môn ĐKT & KGN",
                 "Theo Thông báo 940/TB-ĐHGTVT",
             ),
+            (
+                11,
+                2026,
+                "0537",
+                "Bảo trì thiết bị máy móc định kỳ",
+                "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống thiết bị, máy móc thí nghiệm",
+                date(2026, 12, 25),
+                "Trung tâm KHCN GTVT, PTN Địa kỹ thuật",
+                "Kế hoạch định kỳ hàng tháng",
+            ),
+            (
+                11,
+                2026,
+                "0537",
+                "NCKH và xâm nhập thực tiễn",
+                "Báo cáo kết quả NCKH, bài báo khoa học và hồ sơ xâm nhập thực tiễn, lao động sản xuất",
+                date(2026, 12, 31),
+                "Trung tâm KHCN GTVT, Bộ môn ĐKT & KGN",
+                "Theo kế hoạch năm học",
+            ),
         ]
         for row in kh_mau:
             ws_kh.append(list(row))
@@ -1147,6 +1167,48 @@ class QuanLyCSDLBộMôn:
                     ws_nv.append(r_g)
                     so_them_moi += 1
 
+            # 4. Đồng bộ Kế hoạch nhiệm vụ tháng tới riêng cho 0537 (Nguyễn Thị Thanh Giang)
+            ws_kh = wb[self.SHEET_KE_HOACH_TOI]
+            rows_kh_giu_lai = []
+            for r in range(2, ws_kh.max_row + 1):
+                t_kh = int(ws_kh.cell(r, 1).value or 0)
+                n_kh = int(ws_kh.cell(r, 2).value or 0)
+                mcb_kh = str(ws_kh.cell(r, 3).value or "").strip()
+                if not (t_kh == thang and n_kh == nam and mcb_kh == "0537"):
+                    rows_kh_giu_lai.append([ws_kh.cell(r, c).value for c in range(1, 9)])
+            if ws_kh.max_row >= 2:
+                ws_kh.delete_rows(2, ws_kh.max_row - 1)
+            for r_kh_old in rows_kh_giu_lai:
+                ws_kh.append(r_kh_old)
+
+            thang_toi = 1 if thang == 12 else thang + 1
+            nam_toi = nam + 1 if thang == 12 else nam
+            cuoi_ky_toi = ngay_cuoi_thang(thang_toi, nam_toi)
+            ws_kh.append(
+                [
+                    thang,
+                    nam,
+                    "0537",
+                    "Bảo trì thiết bị máy móc định kỳ",
+                    "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống thiết bị, máy móc thí nghiệm",
+                    date(nam_toi, thang_toi, min(25, cuoi_ky_toi.day)),
+                    "Trung tâm KHCN GTVT, PTN Địa kỹ thuật",
+                    "Kế hoạch định kỳ hàng tháng",
+                ]
+            )
+            ws_kh.append(
+                [
+                    thang,
+                    nam,
+                    "0537",
+                    "NCKH và xâm nhập thực tiễn",
+                    "Báo cáo kết quả NCKH, bài báo khoa học và hồ sơ xâm nhập thực tiễn, lao động sản xuất",
+                    cuoi_ky_toi,
+                    "Trung tâm KHCN GTVT, Bộ môn ĐKT & KGN",
+                    "Theo kế hoạch năm học",
+                ]
+            )
+
         _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return so_them_moi
@@ -1262,7 +1324,32 @@ class QuanLyCSDLBộMôn:
                     ds_kh_rieng.append(item_kh)
                 else:
                     ds_kh_chung.append(item_kh)
-        ds_kh_toi = ds_kh_rieng if ds_kh_rieng else ds_kh_chung
+        if ds_kh_rieng:
+            ds_kh_toi = ds_kh_rieng
+        elif ma_can_bo == "0537":
+            thang_toi = 1 if thang == 12 else thang + 1
+            nam_toi = nam + 1 if thang == 12 else nam
+            cuoi_ky_toi = ngay_cuoi_thang(thang_toi, nam_toi)
+            ds_kh_toi = [
+                KeHoachKyToi(
+                    nhiem_vu="Bảo trì thiết bị máy móc định kỳ",
+                    san_pham_du_kien="Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống thiết bị, máy móc thí nghiệm",
+                    thoi_han=date(nam_toi, thang_toi, min(25, cuoi_ky_toi.day)),
+                    don_vi_phoi_hop="Trung tâm KHCN GTVT, PTN Địa kỹ thuật",
+                    ghi_chu="Kế hoạch định kỳ hàng tháng",
+                    ca_nhan_chu_tri=gv.ho_va_ten,
+                ),
+                KeHoachKyToi(
+                    nhiem_vu="NCKH và xâm nhập thực tiễn",
+                    san_pham_du_kien="Báo cáo kết quả NCKH, bài báo khoa học và hồ sơ xâm nhập thực tiễn, lao động sản xuất",
+                    thoi_han=cuoi_ky_toi,
+                    don_vi_phoi_hop="Trung tâm KHCN GTVT, Bộ môn ĐKT & KGN",
+                    ghi_chu="Theo kế hoạch năm học",
+                    ca_nhan_chu_tri=gv.ho_va_ten,
+                ),
+            ]
+        else:
+            ds_kh_toi = ds_kh_chung
 
         wb.close()
         return BaoCaoCaNhanThang(

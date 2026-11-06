@@ -289,6 +289,10 @@ class TestStage7DeploymentAudit(unittest.TestCase):
         bc_0537 = db.doc_bao_cao_ca_nhan("0537", thang=11, nam=2026)
         self.assertEqual(bc_0537.giang_vien.ten_don_vi, "Trung tâm KHCN GTVT")
         self.assertEqual(bc_0537.giang_vien.nguoi_nhan_bao_cao, "Lương Xuân Chiểu")
+        self.assertEqual(
+            [kh.nhiem_vu for kh in bc_0537.ke_hoach_thang_toi],
+            ["Bảo trì thiết bị máy móc định kỳ", "NCKH và xâm nhập thực tiễn"],
+        )
         ten_nv_0537 = [nv.nhiem_vu for nv in bc_0537.danh_sach_nhiem_vu]
         for nv_bat_buoc in [
             "Thực hiện NCKH và viết báo NCKH",

@@ -131,8 +131,13 @@ class TestStage3Generators(unittest.TestCase):
         wb_g = openpyxl.load_workbook(f_giang_xlsx, data_only=False)
         self.assertEqual(wb_g["BC tháng"]["A2"].value, "ĐƠN VỊ: TRUNG TÂM KHCN GTVT")
         self.assertEqual(wb_g["BC tháng"]["C9"].value, "Lương Xuân Chiểu")
+        self.assertEqual(wb_g["BC tháng"]["B57"].value, "Bảo trì thiết bị máy móc định kỳ")
+        self.assertEqual(wb_g["BC tháng"]["B58"].value, "NCKH và xâm nhập thực tiễn")
+        self.assertIsNone(wb_g["BC tháng"]["B59"].value)
         self.assertEqual(wb_g["BC tuần"]["A2"].value, "ĐƠN VỊ: TRUNG TÂM KHCN GTVT")
         self.assertEqual(wb_g["BC tuần"]["C9"].value, "Lương Xuân Chiểu")
+        self.assertEqual(wb_g["BC tuần"]["B39"].value, "Bảo trì thiết bị máy móc định kỳ")
+        self.assertEqual(wb_g["BC tuần"]["B40"].value, "NCKH và xâm nhập thực tiễn")
         wb_g.close()
 
         f_giang_docx = self.docx_gen.xuat_docx_ca_nhan_01b(bc_giang, self.out_dir)
