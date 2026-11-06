@@ -81,7 +81,7 @@ def hien_thi_bao_cao_don_vi_mau_02(
     st.markdown(
         "<div class='section-banner'>"
         "<h3>🏛️ BÁO CÁO CÔNG VIỆC ĐƠN VỊ (MẪU 02 — TUẦN, THÁNG & THEO DÕI CHẤM ĐIỂM 21 GIẢNG VIÊN)</h3>"
-        "<p>Đơn vị: <b>Bộ môn Địa kỹ thuật và Không gian ngầm</b> | Trưởng đơn vị: <b>GS.TS. Trần Thế Truyền</b> | "
+        "<p>Đơn vị: <b>Bộ môn Địa kỹ thuật và Không gian ngầm</b> | "
         f"Lãnh đạo Trường phụ trách: <b>{LANH_DAO_PHU_TRACH_DON_VI_MAC_DINH}</b></p>"
         "</div>",
         unsafe_allow_html=True,
@@ -188,7 +188,6 @@ def hien_thi_bao_cao_don_vi_mau_02(
                 f"- **Đến ngày (cuối kỳ):** `{den_ngay_02a.strftime('%d/%m/%Y')}` (Tuần số `{tuan_so_02a}`)"
             )
             i2.markdown(
-                f"- **Trưởng đơn vị:** **{NGUOI_NHAN_BAO_CAO_MAC_DINH}**  \n"
                 f"- **Lãnh đạo Trường phụ trách:** **{LANH_DAO_PHU_TRACH_DON_VI_MAC_DINH}**"
             )
             i3.markdown(
@@ -341,7 +340,6 @@ def hien_thi_bao_cao_don_vi_mau_02(
                 f"- **Ngày cuối kỳ:** `{ngay_cuoi_ky.strftime('%d/%m/%Y')}`"
             )
             i2.markdown(
-                f"- **Trưởng đơn vị:** **{NGUOI_NHAN_BAO_CAO_MAC_DINH}**  \n"
                 f"- **Lãnh đạo Trường phụ trách:** **{LANH_DAO_PHU_TRACH_DON_VI_MAC_DINH}**"
             )
             i3.markdown(
@@ -796,7 +794,7 @@ def hien_thi_giao_viec_va_theo_doi_mau_03(
 
             st.markdown("##### I. NỘI DUNG GIAO VIỆC")
             f1, f2, f3 = st.columns(3)
-            nguoi_giao_in = f1.text_input("Người giao việc (họ tên, chức vụ)", value=f"{NGUOI_NHAN_BAO_CAO_MAC_DINH} (Trưởng bộ môn)")
+            nguoi_giao_in = f1.text_input("Người giao việc (họ tên, chức vụ)", value="")
             nguoi_ct_in = f2.text_input("Người chủ trì thực hiện (họ tên, vị trí việc làm)", value=nv_p.ten_can_bo_chu_tri or ten_gv_p)
             nguoi_ph_in = f3.text_input("Người phối hợp", value=nv_p.nguoi_phoi_hop or "Các giảng viên trong Bộ môn")
 
@@ -859,8 +857,7 @@ def hien_thi_giao_viec_va_theo_doi_mau_03(
 
             sig1, sig2 = st.columns(2)
             sig1.markdown(
-                f"<div style='text-align:center;'><b>NGƯỜI GIAO VIỆC</b><br><i>(Ký, ghi rõ họ tên)</i><br><br>"
-                f"<b>{NGUOI_NHAN_BAO_CAO_MAC_DINH}</b></div>",
+                "<div style='text-align:center;'><b>NGƯỜI GIAO VIỆC</b><br><i>(Ký, ghi rõ họ tên)</i></div>",
                 unsafe_allow_html=True,
             )
             sig2.markdown(
@@ -1049,8 +1046,7 @@ def _hien_thi_chu_ky_truong_don_vi(ngay_ky: date) -> None:
     _, col_r = st.columns([3, 2])
     col_r.markdown(
         f"<div style='text-align:center; margin-top:8px;'><i>{ngay_str}</i><br>"
-        f"<b>TRƯỞNG ĐƠN VỊ</b><br><i>(Ký, ghi rõ họ tên)</i><br><br>"
-        f"<b>{NGUOI_NHAN_BAO_CAO_MAC_DINH}</b></div>",
+        f"<b>TRƯỞNG ĐƠN VỊ</b><br><i>(Ký, ghi rõ họ tên)</i></div>",
         unsafe_allow_html=True,
     )
 

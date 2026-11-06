@@ -659,7 +659,6 @@ def hien_thi_phan_he_giang_vien(
                 f"- **Đơn vị:** **{ten_dv_gv}**"
             )
             info3.markdown(
-                f"- **Trưởng đơn vị / Người nhận báo cáo:** **{bc.giang_vien.nguoi_nhan_bao_cao}**  \n"
                 f"- **Biểu mẫu gốc:** Sheet `BC tuần` (`{bc.ten_file_xlsx_chuan}`)"
             )
 
@@ -749,8 +748,7 @@ def hien_thi_phan_he_giang_vien(
         sw_l, sw_r = st.columns(2)
         sw_l.markdown(
             "**NHẬN XÉT CỦA NGƯỜI NHẬN BÁO CÁO**  \n"
-            "*(Trưởng bộ môn/trưởng đơn vị ghi nhận xét, ký và ghi rõ họ tên)*  \n"
-            f"**{bc.giang_vien.nguoi_nhan_bao_cao}**"
+            "*(Trưởng bộ môn/trưởng đơn vị ghi nhận xét, ký và ghi rõ họ tên)*"
         )
         sw_r.markdown(
             f"<div style='text-align:center;'><i>{ngay_ky_w_str}</i><br>"
@@ -849,7 +847,6 @@ def hien_thi_phan_he_giang_vien(
             f"- **Đơn vị:** **{ten_dv_gv}**"
         )
         info3.markdown(
-            f"- **Trưởng đơn vị / Người nhận báo cáo:** **{bc.giang_vien.nguoi_nhan_bao_cao}**  \n"
             f"- **Tệp xuất chuẩn:** `{bc.ten_file_xlsx_chuan}`"
         )
 
@@ -1126,8 +1123,7 @@ def hien_thi_phan_he_giang_vien(
     sig_l, sig_r = st.columns(2)
     sig_l.markdown(
         "**NHẬN XÉT CỦA NGƯỜI NHẬN BÁO CÁO**  \n"
-        "*(Trưởng bộ môn/trưởng đơn vị ghi nhận xét, ký và ghi rõ họ tên)*  \n"
-        f"**{bc.giang_vien.nguoi_nhan_bao_cao}**"
+        "*(Trưởng bộ môn/trưởng đơn vị ghi nhận xét, ký và ghi rõ họ tên)*"
     )
     sig_r.markdown(
         f"<div style='text-align:center;'><i>{ngay_ky_str}</i><br>"
@@ -1436,7 +1432,7 @@ def main() -> None:
         "<div class='utc-top-banner'>"
         "<h2>📊 HỆ THỐNG BÁO CÁO CÔNG VIỆC & GIAO VIỆC BỘ MÔN ĐỊA KỸ THUẬT VÀ KHÔNG GIAN NGẦM</h2>"
         "<p>Trường Đại học Giao thông vận tải (UTC) — Thực hiện theo <b>Thông báo số 940/TB-ĐHGTVT</b> & "
-        "<b>Nghị định số 233/2026/NĐ-CP</b> | Trưởng bộ môn: <b>GS.TS. Trần Thế Truyền</b></p>"
+        "<b>Nghị định số 233/2026/NĐ-CP</b></p>"
         "</div>",
         unsafe_allow_html=True,
     )
