@@ -244,6 +244,50 @@ class QuanLyCSDLBộMôn:
                 True,
                 True,
             ),
+            (
+                "LAP_0537_01",
+                "0537",
+                "Thực hiện NCKH và viết báo NCKH",
+                "Kế hoạch năm học",
+                "KH-NCKH-0537",
+                "Báo cáo chuyên đề NCKH và bản thảo bài báo khoa học chuyên ngành Địa kỹ thuật – Công trình",
+                28,
+                False,
+                True,
+            ),
+            (
+                "LAP_0537_02",
+                "0537",
+                "Xâm nhập thực tiễn, lao động sản xuất",
+                "Kế hoạch năm học",
+                "KH-TT-0537",
+                "Hồ sơ, số liệu khảo sát thực tế hiện trường/phòng thí nghiệm và báo cáo kết quả xâm nhập thực tiễn, lao động sản xuất",
+                28,
+                False,
+                True,
+            ),
+            (
+                "LAP_0537_03",
+                "0537",
+                "Bảo trì máy móc thí nghiệm định kỳ",
+                "Chức năng, nhiệm vụ thường xuyên",
+                "PTN-BT-0537",
+                "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống máy móc, thiết bị thí nghiệm Địa kỹ thuật – Công trình đảm bảo hoạt động tốt",
+                25,
+                True,
+                True,
+            ),
+            (
+                "LAP_0537_04",
+                "0537",
+                "Hỗ trợ thí nghiệm của NCKH SV, NCS",
+                "Kế hoạch năm học",
+                "PTN-NCKH-0537",
+                "Bộ số liệu và phiếu kết quả thí nghiệm mẫu đất/đá/vật liệu hỗ trợ các đề tài NCKH Sinh viên và Nghiên cứu sinh",
+                28,
+                True,
+                True,
+            ),
         ]
         for row in mau_lap_lai:
             ws_lap.append(list(row))
@@ -519,23 +563,23 @@ class QuanLyCSDLBộMôn:
                         2026,
                         gv.ma_can_bo,
                         gv.ho_va_ten,
-                        "PTN Địa kỹ thuật - Công trình",
-                        f"Quản lý, kiểm tra định kỳ, bảo dưỡng thiết bị thí nghiệm Cơ học đất - Địa kỹ thuật và chuẩn bị mẫu đất/đá phục vụ giảng dạy, NCKH tháng 11/2026 ({gv.ho_va_ten})",
-                        "Chức năng, nhiệm vụ thường xuyên",
-                        "KH-PTN-DKT",
-                        "Sổ theo dõi vận hành thiết bị PTN, biên bản kiểm tra tình trạng máy nén tam trục, máy cắt phẳng, máy cố kết đảm bảo hoạt động tốt",
+                        "Nhóm NCKH Bộ môn ĐKT & KGN",
+                        "Thực hiện NCKH và viết báo NCKH",
+                        "Kế hoạch năm học",
+                        "KH-NCKH-0537",
+                        "Báo cáo chuyên đề NCKH và bản thảo bài báo khoa học chuyên ngành Địa kỹ thuật – Công trình",
                         date(2026, 11, 1),
                         date(2026, 11, 28),
-                        date(2026, 11, 26),
+                        date(2026, 11, 27),
                         "Hoàn thành đúng hạn",
                         100.0,
                         "",
-                        True,
+                        False,
                         True,
                         "Cao",
                         "Đạt yêu cầu – tốt",
                         "",
-                        "Công tác Phòng thí nghiệm",
+                        "Kế hoạch NCKH hàng tháng",
                     ),
                     (
                         f"NV_202611_{stt_nv + 2:03d}",
@@ -543,12 +587,12 @@ class QuanLyCSDLBộMôn:
                         2026,
                         gv.ma_can_bo,
                         gv.ho_va_ten,
-                        "Nhóm NCKH Bộ môn ĐKT & KGN",
-                        f"Phối hợp thực hiện thí nghiệm chuyên môn phục vụ đề tài NCKH các cấp, NCKH sinh viên và rà soát tài liệu hướng dẫn thí nghiệm Địa kỹ thuật ({gv.ho_va_ten})",
+                        "PTN Công trình & Bộ môn ĐKT",
+                        "Xâm nhập thực tiễn, lao động sản xuất",
                         "Kế hoạch năm học",
-                        "KH-NCKH-PTN",
-                        "Bộ số liệu kết quả thí nghiệm mẫu đất/đá trong phòng và tài liệu hướng dẫn thí nghiệm cập nhật",
-                        date(2026, 11, 3),
+                        "KH-TT-0537",
+                        "Hồ sơ, số liệu khảo sát thực tế hiện trường/phòng thí nghiệm và báo cáo kết quả xâm nhập thực tiễn, lao động sản xuất",
+                        date(2026, 11, 2),
                         date(2026, 11, 28),
                         date(2026, 11, 27),
                         "Hoàn thành đúng hạn",
@@ -559,7 +603,7 @@ class QuanLyCSDLBộMôn:
                         "Thường",
                         "Đạt yêu cầu – tốt",
                         "",
-                        "Kế hoạch NCKH & PTN",
+                        "Nhiệm vụ hàng tháng",
                     ),
                     (
                         f"NV_202611_{stt_nv + 3:03d}",
@@ -567,27 +611,51 @@ class QuanLyCSDLBộMôn:
                         2026,
                         gv.ma_can_bo,
                         gv.ho_va_ten,
-                        "Bộ môn ĐKT & KGN",
-                        f"Tham gia sinh hoạt chuyên môn, họp giao ban định kỳ và công tác coi chấm thi học phần thực hành thí nghiệm tháng 11/2026 ({gv.ho_va_ten})",
+                        "PTN Địa kỹ thuật - Công trình",
+                        "Bảo trì máy móc thí nghiệm định kỳ",
                         "Chức năng, nhiệm vụ thường xuyên",
-                        "BB-BM-DKT",
-                        "Tham gia đầy đủ các buổi họp chuyên môn và hoàn thành bảng điểm đánh giá thí nghiệm học phần đúng quy định",
+                        "PTN-BT-0537",
+                        "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống máy móc, thiết bị thí nghiệm Địa kỹ thuật – Công trình đảm bảo hoạt động tốt",
                         date(2026, 11, 1),
-                        date(2026, 11, 30),
-                        date(2026, 11, 28),
+                        date(2026, 11, 25),
+                        date(2026, 11, 24),
                         "Hoàn thành đúng hạn",
                         100.0,
                         "",
-                        False,
                         True,
-                        "Thường",
+                        True,
+                        "Cao",
                         "Đạt yêu cầu – tốt",
                         "",
-                        "Nhiệm vụ thường xuyên",
+                        "Công tác Phòng thí nghiệm hàng tháng",
+                    ),
+                    (
+                        f"NV_202611_{stt_nv + 4:03d}",
+                        11,
+                        2026,
+                        gv.ma_can_bo,
+                        gv.ho_va_ten,
+                        "Nhóm NCKH Bộ môn ĐKT & KGN",
+                        "Hỗ trợ thí nghiệm của NCKH SV, NCS",
+                        "Kế hoạch năm học",
+                        "PTN-NCKH-0537",
+                        "Bộ số liệu và phiếu kết quả thí nghiệm mẫu đất/đá/vật liệu hỗ trợ các đề tài NCKH Sinh viên và Nghiên cứu sinh",
+                        date(2026, 11, 3),
+                        date(2026, 11, 28),
+                        date(2026, 11, 27),
+                        "Hoàn thành đúng hạn",
+                        100.0,
+                        "",
+                        True,
+                        True,
+                        "Cao",
+                        "Đạt yêu cầu – tốt",
+                        "",
+                        "Hỗ trợ NCKH SV & NCS hàng tháng",
                     ),
                 ]
                 ds_nv_mau.extend(nv_giang_list)
-                stt_nv += 4
+                stt_nv += 5
                 continue
             ds_nv_mau.append(
                 (
@@ -876,13 +944,78 @@ class QuanLyCSDLBộMôn:
             ws_nv.append(row_vals)
 
         so_them_moi = 0
-        if "0537" in map_chuan and "0537" not in mcb_da_co_nv:
+        if "0537" in map_chuan:
             gv_giang = map_chuan["0537"]
             cuoi_ky = ngay_cuoi_thang(thang, nam)
             dau_ky = date(nam, thang, 1)
             ngay_ht_1 = date(nam, thang, min(28, cuoi_ky.day))
-            ngay_ht_2 = date(nam, thang, min(26, cuoi_ky.day))
+            ngay_ht_2 = date(nam, thang, min(24, cuoi_ky.day))
             ngay_ht_3 = date(nam, thang, min(27, cuoi_ky.day))
+
+            # Đồng bộ 4 nhiệm vụ hàng tháng của 0537 vào Sheet CongViec_LapLai nếu chưa có
+            ws_lap = wb[self.SHEET_VIEC_LAP_LAI]
+            ten_lap_0537_da_co = {
+                str(ws_lap.cell(r, 3).value or "").strip().lower()
+                for r in range(2, ws_lap.max_row + 1)
+                if str(ws_lap.cell(r, 2).value or "").strip() == "0537"
+            }
+            ds_lap_0537 = [
+                (
+                    "LAP_0537_01",
+                    "0537",
+                    "Thực hiện NCKH và viết báo NCKH",
+                    "Kế hoạch năm học",
+                    "KH-NCKH-0537",
+                    "Báo cáo chuyên đề NCKH và bản thảo bài báo khoa học chuyên ngành Địa kỹ thuật – Công trình",
+                    28,
+                    False,
+                    True,
+                ),
+                (
+                    "LAP_0537_02",
+                    "0537",
+                    "Xâm nhập thực tiễn, lao động sản xuất",
+                    "Kế hoạch năm học",
+                    "KH-TT-0537",
+                    "Hồ sơ, số liệu khảo sát thực tế hiện trường/phòng thí nghiệm và báo cáo kết quả xâm nhập thực tiễn, lao động sản xuất",
+                    28,
+                    False,
+                    True,
+                ),
+                (
+                    "LAP_0537_03",
+                    "0537",
+                    "Bảo trì máy móc thí nghiệm định kỳ",
+                    "Chức năng, nhiệm vụ thường xuyên",
+                    "PTN-BT-0537",
+                    "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống máy móc, thiết bị thí nghiệm Địa kỹ thuật – Công trình đảm bảo hoạt động tốt",
+                    25,
+                    True,
+                    True,
+                ),
+                (
+                    "LAP_0537_04",
+                    "0537",
+                    "Hỗ trợ thí nghiệm của NCKH SV, NCS",
+                    "Kế hoạch năm học",
+                    "PTN-NCKH-0537",
+                    "Bộ số liệu và phiếu kết quả thí nghiệm mẫu đất/đá/vật liệu hỗ trợ các đề tài NCKH Sinh viên và Nghiên cứu sinh",
+                    28,
+                    True,
+                    True,
+                ),
+            ]
+            for row_l in ds_lap_0537:
+                if row_l[2].lower() not in ten_lap_0537_da_co:
+                    ws_lap.append(list(row_l))
+
+            ten_nv_0537_da_co = {
+                str(ws_nv.cell(r, 7).value or "").strip().lower()
+                for r in range(2, ws_nv.max_row + 1)
+                if int(ws_nv.cell(r, 2).value or 0) == thang
+                and int(ws_nv.cell(r, 3).value or 0) == nam
+                and str(ws_nv.cell(r, 4).value or "").strip() == "0537"
+            }
             nv_giang_rows = [
                 [
                     f"NV_{nam}{thang:02d}_0537_01",
@@ -914,23 +1047,23 @@ class QuanLyCSDLBộMôn:
                     nam,
                     "0537",
                     gv_giang.ho_va_ten,
-                    "PTN Địa kỹ thuật - Công trình",
-                    f"Quản lý, kiểm tra định kỳ, bảo dưỡng thiết bị thí nghiệm Cơ học đất - Địa kỹ thuật và chuẩn bị mẫu đất/đá phục vụ giảng dạy, NCKH tháng {thang:02d}/{nam} ({gv_giang.ho_va_ten})",
-                    "Chức năng, nhiệm vụ thường xuyên",
-                    "KH-PTN-DKT",
-                    "Sổ theo dõi vận hành thiết bị PTN, biên bản kiểm tra tình trạng máy nén tam trục, máy cắt phẳng, máy cố kết đảm bảo hoạt động tốt",
+                    "Nhóm NCKH Bộ môn ĐKT & KGN",
+                    "Thực hiện NCKH và viết báo NCKH",
+                    "Kế hoạch năm học",
+                    "KH-NCKH-0537",
+                    "Báo cáo chuyên đề NCKH và bản thảo bài báo khoa học chuyên ngành Địa kỹ thuật – Công trình",
                     dau_ky,
                     ngay_ht_1,
-                    ngay_ht_2,
+                    ngay_ht_3,
                     "Hoàn thành đúng hạn",
                     100.0,
                     "",
-                    True,
+                    False,
                     True,
                     "Cao",
                     "Đạt yêu cầu – tốt",
                     "",
-                    "Công tác Phòng thí nghiệm",
+                    "Kế hoạch NCKH hàng tháng",
                 ],
                 [
                     f"NV_{nam}{thang:02d}_0537_03",
@@ -938,12 +1071,12 @@ class QuanLyCSDLBộMôn:
                     nam,
                     "0537",
                     gv_giang.ho_va_ten,
-                    "Nhóm NCKH Bộ môn ĐKT & KGN",
-                    f"Phối hợp thực hiện thí nghiệm chuyên môn phục vụ đề tài NCKH các cấp, NCKH sinh viên và rà soát tài liệu hướng dẫn thí nghiệm Địa kỹ thuật ({gv_giang.ho_va_ten})",
+                    "PTN Công trình & Bộ môn ĐKT",
+                    "Xâm nhập thực tiễn, lao động sản xuất",
                     "Kế hoạch năm học",
-                    "KH-NCKH-PTN",
-                    "Bộ số liệu kết quả thí nghiệm mẫu đất/đá trong phòng và tài liệu hướng dẫn thí nghiệm cập nhật",
-                    date(nam, thang, min(3, cuoi_ky.day)),
+                    "KH-TT-0537",
+                    "Hồ sơ, số liệu khảo sát thực tế hiện trường/phòng thí nghiệm và báo cáo kết quả xâm nhập thực tiễn, lao động sản xuất",
+                    date(nam, thang, min(2, cuoi_ky.day)),
                     ngay_ht_1,
                     ngay_ht_3,
                     "Hoàn thành đúng hạn",
@@ -954,7 +1087,7 @@ class QuanLyCSDLBộMôn:
                     "Thường",
                     "Đạt yêu cầu – tốt",
                     "",
-                    "Kế hoạch NCKH & PTN",
+                    "Nhiệm vụ hàng tháng",
                 ],
                 [
                     f"NV_{nam}{thang:02d}_0537_04",
@@ -962,28 +1095,53 @@ class QuanLyCSDLBộMôn:
                     nam,
                     "0537",
                     gv_giang.ho_va_ten,
-                    "Bộ môn ĐKT & KGN",
-                    f"Tham gia sinh hoạt chuyên môn, họp giao ban định kỳ và công tác coi chấm thi học phần thực hành thí nghiệm tháng {thang:02d}/{nam} ({gv_giang.ho_va_ten})",
+                    "PTN Địa kỹ thuật - Công trình",
+                    "Bảo trì máy móc thí nghiệm định kỳ",
                     "Chức năng, nhiệm vụ thường xuyên",
-                    "BB-BM-DKT",
-                    "Tham gia đầy đủ các buổi họp chuyên môn và hoàn thành bảng điểm đánh giá thí nghiệm học phần đúng quy định",
+                    "PTN-BT-0537",
+                    "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống máy móc, thiết bị thí nghiệm Địa kỹ thuật – Công trình đảm bảo hoạt động tốt",
                     dau_ky,
-                    cuoi_ky,
-                    ngay_ht_1,
+                    date(nam, thang, min(25, cuoi_ky.day)),
+                    ngay_ht_2,
                     "Hoàn thành đúng hạn",
                     100.0,
                     "",
-                    False,
                     True,
-                    "Thường",
+                    True,
+                    "Cao",
                     "Đạt yêu cầu – tốt",
                     "",
-                    "Nhiệm vụ thường xuyên",
+                    "Công tác Phòng thí nghiệm hàng tháng",
+                ],
+                [
+                    f"NV_{nam}{thang:02d}_0537_05",
+                    thang,
+                    nam,
+                    "0537",
+                    gv_giang.ho_va_ten,
+                    "Nhóm NCKH Bộ môn ĐKT & KGN",
+                    "Hỗ trợ thí nghiệm của NCKH SV, NCS",
+                    "Kế hoạch năm học",
+                    "PTN-NCKH-0537",
+                    "Bộ số liệu và phiếu kết quả thí nghiệm mẫu đất/đá/vật liệu hỗ trợ các đề tài NCKH Sinh viên và Nghiên cứu sinh",
+                    date(nam, thang, min(3, cuoi_ky.day)),
+                    ngay_ht_1,
+                    ngay_ht_3,
+                    "Hoàn thành đúng hạn",
+                    100.0,
+                    "",
+                    True,
+                    True,
+                    "Cao",
+                    "Đạt yêu cầu – tốt",
+                    "",
+                    "Hỗ trợ NCKH SV & NCS hàng tháng",
                 ],
             ]
             for r_g in nv_giang_rows:
-                ws_nv.append(r_g)
-                so_them_moi += 1
+                if str(r_g[6]).strip().lower() not in ten_nv_0537_da_co:
+                    ws_nv.append(r_g)
+                    so_them_moi += 1
 
         _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()

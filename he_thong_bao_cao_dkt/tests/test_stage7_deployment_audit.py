@@ -286,6 +286,16 @@ class TestStage7DeploymentAudit(unittest.TestCase):
         self.assertNotIn("0799", ds_gv)
         self.assertIn("0537", ds_gv)
 
+        bc_0537 = db.doc_bao_cao_ca_nhan("0537", thang=11, nam=2026)
+        ten_nv_0537 = [nv.nhiem_vu for nv in bc_0537.danh_sach_nhiem_vu]
+        for nv_bat_buoc in [
+            "Thực hiện NCKH và viết báo NCKH",
+            "Xâm nhập thực tiễn, lao động sản xuất",
+            "Bảo trì máy móc thí nghiệm định kỳ",
+            "Hỗ trợ thí nghiệm của NCKH SV, NCS",
+        ]:
+            self.assertIn(nv_bat_buoc, ten_nv_0537)
+
         for mcb, usr, pwd in [("0537", "giangntt", "123456"), ("0064", "ducla", "123456"), ("1472", "linhnt2", "30032013")]:
             gv = ds_gv[mcb]
             agent = USmartBaoCaoAgent(usr, pwd)

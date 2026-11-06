@@ -772,36 +772,47 @@ class USmartBaoCaoAgent:
             # Thành viên Nguyễn Thị Thanh Giang (0537 - giangntt - Giảng viên thực hành, thí nghiệm PTN Công trình / Bộ môn ĐKT & KGN)
             ds_mau_ptn = [
                 (
-                    "Hướng dẫn thực hành, thí nghiệm các học phần Cơ học đất, Cơ học đất đá, Địa chất công trình và Nền móng công trình cho sinh viên theo kế hoạch học kỳ I năm học 2026-2027",
+                    f"Hướng dẫn thực hành, thí nghiệm các học phần Cơ học đất, Cơ học đất đá, Địa chất công trình cho sinh viên hệ chính quy tháng {thang:02d}/{nam} ({giang_vien.ho_va_ten})",
                     "Kế hoạch năm học",
-                    "TKB-TN-DKT-2026",
-                    "Hoàn thành 100% các ca hướng dẫn thí nghiệm trong kỳ, chấm báo cáo thí nghiệm và xác nhận kết quả thực hành cho sinh viên",
+                    "TKB-PTN-2026",
+                    "Hoàn thành 100% các ca hướng dẫn thí nghiệm theo lịch phân công, ký xác nhận sổ nhật ký phòng thí nghiệm và phiếu kết quả thí nghiệm của sinh viên",
                     True,
                 ),
                 (
-                    "Quản lý, kiểm tra định kỳ, bảo dưỡng thiết bị thí nghiệm Địa kỹ thuật – Công trình (máy cắt phẳng, máy nén cố kết, máy nén ba trục, CBR, Proctor) và chuẩn bị mẫu đất/đá phục vụ giảng dạy",
+                    "Thực hiện NCKH và viết báo NCKH",
+                    "Kế hoạch năm học",
+                    "KH-NCKH-0537",
+                    "Báo cáo chuyên đề NCKH và bản thảo bài báo khoa học chuyên ngành Địa kỹ thuật – Công trình",
+                    False,
+                ),
+                (
+                    "Xâm nhập thực tiễn, lao động sản xuất",
+                    "Kế hoạch năm học",
+                    "KH-TT-0537",
+                    "Hồ sơ, số liệu khảo sát thực tế hiện trường/phòng thí nghiệm và báo cáo kết quả xâm nhập thực tiễn, lao động sản xuất",
+                    False,
+                ),
+                (
+                    "Bảo trì máy móc thí nghiệm định kỳ",
                     "Chức năng, nhiệm vụ thường xuyên",
-                    "PTN-DKT-2026",
-                    "Sổ nhật ký vận hành thiết bị PTN, biên bản kiểm tra tình trạng kỹ thuật thiết bị và bộ mẫu thí nghiệm chuẩn bị đầy đủ theo ca học",
+                    "PTN-BT-0537",
+                    "Sổ nhật ký vận hành, biên bản kiểm tra và bảo trì định kỳ hệ thống máy móc, thiết bị thí nghiệm Địa kỹ thuật – Công trình đảm bảo hoạt động tốt",
                     True,
                 ),
                 (
-                    "Phối hợp thực hiện thí nghiệm chuyên môn phục vụ các đề tài NCKH các cấp, đề tài NCKH sinh viên và chuẩn hóa hồ sơ năng lực Phòng thí nghiệm Địa kỹ thuật & KGN",
+                    "Hỗ trợ thí nghiệm của NCKH SV, NCS",
                     "Kế hoạch năm học",
-                    "KHCN-PTN-2026",
-                    "Số liệu thí nghiệm các chỉ tiêu cơ lý đất/đá phục vụ đề tài NCKH của Bộ môn và danh mục thiết bị PTN cập nhật trên hệ thống uSmart",
-                    False,
-                ),
-                (
-                    "Tham gia sinh hoạt chuyên môn, họp giao ban định kỳ và thực hiện công tác coi thi, chấm thi học kỳ I năm học 2026-2027 theo phân công của Bộ môn & PTN Công trình",
-                    "Chức năng, nhiệm vụ thường xuyên",
-                    "BB-BM-DKT",
-                    "Biên bản họp chuyên môn và hoàn thành đầy đủ các ca coi thi, chấm thi đúng quy chế của Nhà trường",
-                    False,
+                    "PTN-NCKH-0537",
+                    "Bộ số liệu và phiếu kết quả thí nghiệm mẫu đất/đá/vật liệu hỗ trợ các đề tài NCKH Sinh viên và Nghiên cứu sinh",
+                    True,
                 ),
             ]
+            # Ưu tiên đặt 5 nhiệm vụ hàng tháng chuẩn của 0537 lên đầu danh sách đề xuất
+            ds_uu_tien_0537: List[NhiemVuCongViec] = []
+            ten_0537_chuan: set[str] = set()
             for idx_p, (ten_p, nguon_p, ma_p, sp_p, tt_p) in enumerate(ds_mau_ptn, start=1):
-                _them_de_xuat(
+                ten_0537_chuan.add(ten_p.strip().lower())
+                ds_uu_tien_0537.append(
                     NhiemVuCongViec(
                         ma_nhiem_vu=f"USMART_PTN_0537_{idx_p:02d}",
                         nhiem_vu=ten_p,
@@ -818,11 +829,15 @@ class USmartBaoCaoAgent:
                         nguoi_phoi_hop="PTN Công trình & Bộ môn ĐKT",
                         la_nhiem_vu_trong_tam=tt_p,
                         la_cong_viec_lap_lai=True,
-                        nguon_du_lieu="Đề xuất từ hồ sơ uSmart PTN & TKB",
+                        nguon_du_lieu="Nhiệm vụ hàng tháng PTN & NCKH",
                     )
                 )
+            for nv_cu in ds_de_xuat:
+                if nv_cu.nhiem_vu.strip().lower() not in ten_0537_chuan:
+                    ds_uu_tien_0537.append(nv_cu)
+            ds_de_xuat = ds_uu_tien_0537[:10]
             nhat_ky.append(
-                "🧪 Đã đề xuất **04 nhiệm vụ chuyên môn trọng tâm** theo vị trí Giảng viên thực hành, thí nghiệm (PTN Công trình & Bộ môn Địa kỹ thuật) cho ThS. Nguyễn Thị Thanh Giang (`0537`)."
+                "🧪 Đã đề xuất **05 nhiệm vụ hàng tháng trọng tâm** (Giảng dạy TN, Thực hiện NCKH & viết báo NCKH, Xâm nhập thực tiễn & lao động sản xuất, Bảo trì máy móc thí nghiệm định kỳ, Hỗ trợ thí nghiệm của NCKH SV & NCS) cho ThS. Nguyễn Thị Thanh Giang (`0537`)."
             )
         else:
             # Đề xuất nhiệm vụ giảng dạy, hướng dẫn đồ án & sinh hoạt chuyên môn chuẩn cho giảng viên Bộ môn
