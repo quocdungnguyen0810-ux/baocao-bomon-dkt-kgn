@@ -32,7 +32,8 @@ const DANH_SACH_MA_CB_DKT = {
   "0837": "Nguyễn Bá Đồng",
   "0072": "Phạm Thanh Hà",
   "0067": "Nguyễn Đình Dũng",
-  "1209": "Phạm Thu Trang"
+  "1209": "Phạm Thu Trang",
+  "0537": "Nguyễn Thị Thanh Giang"
 };
 
 /**

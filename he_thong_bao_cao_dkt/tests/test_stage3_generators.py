@@ -77,9 +77,9 @@ class TestStage3Generators(unittest.TestCase):
         wb.close()
 
     def test_02_xuat_va_kiem_toan_mau_02_va_mau_03_don_vi(self) -> None:
-        """Kiểm toán tổng hợp Mẫu 02 (02b & 02c) và Mẫu 03 (03a, 03b, 03c) cho toàn bộ 21 giảng viên Bộ môn."""
+        """Kiểm toán tổng hợp Mẫu 02 (02b & 02c) và Mẫu 03 (03a, 03b, 03c) cho toàn bộ 22 thành viên Bộ môn."""
         ds_bc = self.db.doc_toan_bo_bao_cao_bo_mon(thang=11, nam=2026)
-        self.assertEqual(len(ds_bc), 21)
+        self.assertEqual(len(ds_bc), 22)
 
         file_02 = self.excel_gen.xuat_mau_02_don_vi(ds_bc, self.out_dir, thang=11, nam=2026)
         self.assertTrue(file_02.exists())
@@ -89,14 +89,16 @@ class TestStage3Generators(unittest.TestCase):
 
         # Kiểm tra Mẫu 02b
         self.assertEqual(ws_02b["E44"].value, '=IF(E40="","",E40-E41-E42-E43)')
-        self.assertEqual(ws_02b["E49"].value, 21)
+        self.assertEqual(ws_02b["E49"].value, 22)
 
-        # Kiểm tra Mẫu 02c có đủ 21 giảng viên từ dòng 7 đến dòng 27
-        ten_gv_02c = [ws_02c.cell(r, 2).value for r in range(7, 28)]
-        self.assertEqual(len(ten_gv_02c), 21)
+        # Kiểm tra Mẫu 02c có đủ 22 thành viên từ dòng 7 đến dòng 28
+        ten_gv_02c = [ws_02c.cell(r, 2).value for r in range(7, 29)]
+        self.assertEqual(len(ten_gv_02c), 22)
         self.assertIn("Nguyễn Hải Hà", ten_gv_02c)
         self.assertIn("Trần Thế Truyền", ten_gv_02c)
+        self.assertIn("Nguyễn Thị Thanh Giang", ten_gv_02c)
         self.assertNotIn("Nguyễn Văn A", ten_gv_02c)
+        self.assertNotIn("Nguyễn Thị Định", ten_gv_02c)
         self.assertEqual(ws_02c["G49"].value, "=COUNTA(B7:B46)")
         wb2.close()
 

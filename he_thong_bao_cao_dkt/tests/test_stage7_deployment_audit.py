@@ -29,8 +29,8 @@ class TestStage7DeploymentAudit(unittest.TestCase):
         gv_dir = ky_dir / "BaoCao_CaNhan_21_GV"
         ds_xlsx = list(gv_dir.glob("BCThang_DKT_*_11-2026.xlsx"))
         ds_docx = list(gv_dir.glob("BCThang_DKT_*_11-2026.docx"))
-        self.assertEqual(len(ds_xlsx), 21)
-        self.assertEqual(len(ds_docx), 21)
+        self.assertEqual(len(ds_xlsx), 22)
+        self.assertEqual(len(ds_docx), 22)
 
     def test_02_kiem_tra_goi_google_sheets_va_apps_script(self) -> None:
         """Đảm bảo các tệp Google Sheets Kế hoạch NCKH, TKB và Google Apps Script đồng bộ 21 GV."""
@@ -259,6 +259,40 @@ class TestStage7DeploymentAudit(unittest.TestCase):
         self.assertTrue((PROJECT_ROOT / "streamlit_app.py").exists())
         self.assertTrue((PROJECT_ROOT / "requirements.txt").exists())
         self.assertTrue((PROJECT_ROOT / ".streamlit" / "config.toml").exists())
+
+    def test_08_tai_khoan_usmart_giangntt_ducla_linhnt2_va_ra_soat_nhiem_vu(self) -> None:
+        """
+        Kiểm tra:
+        1. Thành viên mới Nguyễn Thị Thanh Giang (`0537` - `giangntt` / `123456`), Lê Anh Đức (`0064` - `ducla` / `123456`),
+           Nguyễn Thái Linh (`1472` - `linhnt2` / `30032013`).
+        2. Không có mặc định hiển thị báo cáo của Nguyễn Thị Định (`0799`).
+        3. Tự rà soát nhiệm vụ trên uSmart để đề xuất công việc báo cáo (`ra_soat_va_de_xuat_nhiem_vu_tu_usmart`).
+        """
+        from he_thong_bao_cao_dkt.models import (
+            lay_mat_khau_usmart_mac_dinh,
+            tim_ma_can_bo_theo_tai_khoan_usmart,
+        )
+        from he_thong_bao_cao_dkt.usmart_baocao_client import USmartBaoCaoAgent
+
+        self.assertEqual(tim_ma_can_bo_theo_tai_khoan_usmart("giangntt"), "0537")
+        self.assertEqual(tim_ma_can_bo_theo_tai_khoan_usmart("ducla"), "0064")
+        self.assertEqual(tim_ma_can_bo_theo_tai_khoan_usmart("linhnt2"), "1472")
+        self.assertEqual(lay_mat_khau_usmart_mac_dinh("giangntt"), "123456")
+        self.assertEqual(lay_mat_khau_usmart_mac_dinh("ducla"), "123456")
+        self.assertEqual(lay_mat_khau_usmart_mac_dinh("linhnt2"), "30032013")
+
+        db = QuanLyCSDLBộMôn(PROJECT_ROOT / "CSDL_BaoCao_BoMon_DKT_KGN.xlsx")
+        ds_gv = db.doc_danh_sach_giang_vien()
+        self.assertNotIn("0799", ds_gv)
+        self.assertIn("0537", ds_gv)
+
+        for mcb, usr, pwd in [("0537", "giangntt", "123456"), ("0064", "ducla", "123456"), ("1472", "linhnt2", "30032013")]:
+            gv = ds_gv[mcb]
+            agent = USmartBaoCaoAgent(usr, pwd)
+            ds_dx, nk = agent.ra_soat_va_de_xuat_nhiem_vu_tu_usmart(gv, thang=11, nam=2026)
+            self.assertGreaterEqual(len(ds_dx), 3)
+            self.assertLessEqual(len(ds_dx), 10)
+            self.assertTrue(any(usr in line for line in nk))
 
 
 if __name__ == "__main__":

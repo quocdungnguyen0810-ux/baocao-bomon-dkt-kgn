@@ -44,8 +44,8 @@ class TestStage5EndToEnd(unittest.TestCase):
         self.assertTrue(kq.file_xlsx_mau_02_don_vi.exists())
         self.assertTrue(kq.file_docx_mau_02_don_vi.exists())
         self.assertTrue(kq.file_xlsx_mau_03_so_giao_viec.exists())
-        # 2 file chính + 42 file của 21 giảng viên
-        self.assertEqual(len(kq.danh_sach_file_toan_bo_gv), 44)
+        # 2 file chính + 44 file của 22 thành viên Bộ môn
+        self.assertEqual(len(kq.danh_sach_file_toan_bo_gv), 46)
         self.assertIsNotNone(kq.ket_qua_usmart)
         self.assertTrue(kq.ket_qua_usmart.thanh_cong)
 

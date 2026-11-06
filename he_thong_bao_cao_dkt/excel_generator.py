@@ -11,11 +11,12 @@ Module Sinh Báo cáo Excel Tự động (.xlsx) chuẩn 100% theo Thông báo s
 - Xóa sạch các dòng ví dụ mẫu (chữ nghiêng màu xám) trước khi điền dữ liệu thực.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import logging
 from pathlib import Path
 import shutil
 import tempfile
+import time
 from typing import List, Optional
 import warnings
 import openpyxl
@@ -74,6 +75,45 @@ def _nap_workbook_an_toan(duong_dan_mau: Path) -> openpyxl.Workbook:
     except OSError:
         pass
     return wb
+
+
+def _luu_workbook_an_toan(wb: openpyxl.Workbook, duong_dan_xuat: Path) -> Path:
+    """
+    Lưu Workbook thông qua tệp tạm rồi ghi đè an toàn sang `duong_dan_xuat`
+    nhằm chống lỗi hỏng file hoặc PermissionError khi OneDrive/Excel đang đồng bộ.
+    """
+    duong_dan_xuat = Path(duong_dan_xuat)
+    duong_dan_xuat.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+    try:
+        wb.save(tmp_path)
+        wb.close()
+        for lan_thu in range(3):
+            try:
+                shutil.copy2(tmp_path, duong_dan_xuat)
+                return duong_dan_xuat
+            except PermissionError:
+                if lan_thu < 2:
+                    time.sleep(0.35)
+                else:
+                    # Nếu tệp đích đang mở trên Excel, lưu sang bản dự phòng cùng thư mục
+                    du_phong = duong_dan_xuat.with_name(
+                        f"{duong_dan_xuat.stem}_CapNhat_{datetime.now().strftime('%H%M%S')}{duong_dan_xuat.suffix}"
+                    )
+                    shutil.copy2(tmp_path, du_phong)
+                    logger.warning(
+                        "Tệp %s đang mở trong Excel; đã lưu bản cập nhật tại: %s",
+                        duong_dan_xuat,
+                        du_phong,
+                    )
+                    return du_phong
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+    return duong_dan_xuat
 
 
 class BoSinhBaoCaoExcel:
@@ -198,8 +238,10 @@ class BoSinhBaoCaoExcel:
         # ---------------- 2. Điền Sheet "BC tuần" (Mẫu 01a) nếu cần ----------------
         if cap_nhat_ca_bc_tuan and "BC tuần" in wb.sheetnames:
             ws_tuan = wb["BC tuần"]
+            tu_ngay_tuan = ngay_thu_hai_tuan or date(bao_cao.nam, bao_cao.thang, 2)
+            den_ngay_tuan = tu_ngay_tuan + timedelta(days=4)
             ws_tuan["A2"] = f"ĐƠN VỊ: {TEN_DON_VI_CHUAN.upper()}"
-            ws_tuan["C5"] = ngay_thu_hai_tuan or date(bao_cao.nam, bao_cao.thang, 2)
+            ws_tuan["C5"] = tu_ngay_tuan
             ws_tuan["C7"] = bao_cao.giang_vien.ho_va_ten
             ws_tuan["C8"] = bao_cao.giang_vien.chuc_danh_day_du
             ws_tuan["C9"] = bao_cao.giang_vien.nguoi_nhan_bao_cao
@@ -216,10 +258,25 @@ class BoSinhBaoCaoExcel:
                 ws_tuan.cell(r, 3, nv.nguon_giao).font = normal_font
                 ws_tuan.cell(r, 4, nv.so_van_ban_ma_viec).font = normal_font
                 ws_tuan.cell(r, 5, nv.san_pham_ket_qua).font = normal_font
-                c_th = ws_tuan.cell(r, 6, nv.thoi_han)
+
+                # Chuẩn hóa Thời hạn & Ngày hoàn thành trong tuần (<= den_ngay_tuan = E5)
+                # để cổng uSmart không báo lỗi "Ngày hoàn thành sau ngày cuối kỳ"
+                th_tuan = nv.thoi_han or den_ngay_tuan
+                ht_tuan = nv.ngay_hoan_thanh
+                if nv.tinh_trang.startswith("Hoàn thành"):
+                    if th_tuan > den_ngay_tuan:
+                        th_tuan = den_ngay_tuan
+                    if ht_tuan is None or ht_tuan > den_ngay_tuan:
+                        ht_tuan = min(th_tuan, den_ngay_tuan)
+                    if nv.tinh_trang == "Hoàn thành đúng hạn" and ht_tuan > th_tuan:
+                        ht_tuan = th_tuan
+                elif ht_tuan and ht_tuan > den_ngay_tuan:
+                    ht_tuan = None
+
+                c_th = ws_tuan.cell(r, 6, th_tuan)
                 c_th.font = normal_font
                 c_th.number_format = "dd/mm/yyyy"
-                c_ht = ws_tuan.cell(r, 7, nv.ngay_hoan_thanh)
+                c_ht = ws_tuan.cell(r, 7, ht_tuan)
                 c_ht.font = normal_font
                 c_ht.number_format = "dd/mm/yyyy"
                 ws_tuan.cell(r, 8, nv.tinh_trang).font = normal_font
@@ -247,7 +304,7 @@ class BoSinhBaoCaoExcel:
 
             ws_tuan["A49"] = bao_cao.de_xuat_kien_nghi or ""
             ws_tuan["A49"].font = normal_font
-            ws_tuan["G51"] = f"Hà Nội, ngày {ngay_ky.day:02d} tháng {ngay_ky.month:02d} năm {ngay_ky.year}"
+            ws_tuan["G51"] = f"Hà Nội, ngày {den_ngay_tuan.day:02d} tháng {den_ngay_tuan.month:02d} năm {den_ngay_tuan.year}"
 
             dv_nguon_w = DataValidation(type="list", formula1="='Danh mục'!$A$2:$A$6", allow_blank=True)
             dv_tt_w = DataValidation(type="list", formula1="='Danh mục'!$B$2:$B$6", allow_blank=True)
@@ -256,8 +313,7 @@ class BoSinhBaoCaoExcel:
             dv_nguon_w.add("C13:C24")
             dv_tt_w.add("H13:H24")
 
-        wb.save(duong_dan_xuat)
-        wb.close()
+        duong_dan_xuat = _luu_workbook_an_toan(wb, duong_dan_xuat)
         logger.info("Đã xuất thành công Mẫu 01 cá nhân tại: %s", duong_dan_xuat)
         return duong_dan_xuat
 
@@ -503,8 +559,7 @@ class BoSinhBaoCaoExcel:
             dv_nguon_02a.add("C12:C23")
             dv_tt_02a.add("J12:J23")
 
-        wb.save(duong_dan_xuat)
-        wb.close()
+        duong_dan_xuat = _luu_workbook_an_toan(wb, duong_dan_xuat)
         logger.info("Đã xuất thành công Mẫu 02 đơn vị (02b & 02c) tại: %s", duong_dan_xuat)
         return duong_dan_xuat
 
@@ -602,7 +657,6 @@ class BoSinhBaoCaoExcel:
             ws_03a["C32"] = nv0.danh_gia_chat_luong
             ws_03a["C33"] = "Hoàn thành tốt nhiệm vụ được giao, đảm bảo chất lượng chuyên môn."
 
-        wb.save(duong_dan_xuat)
-        wb.close()
+        duong_dan_xuat = _luu_workbook_an_toan(wb, duong_dan_xuat)
         logger.info("Đã xuất thành công Sổ giao việc Mẫu 03 tại: %s", duong_dan_xuat)
         return duong_dan_xuat

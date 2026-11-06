@@ -38,6 +38,8 @@ from he_thong_bao_cao_dkt.models import (
     KeHoachKyToi,
     NhiemVuCongViec,
     TEN_DON_VI_CHUAN,
+    lay_mat_khau_usmart_mac_dinh,
+    tim_ma_can_bo_theo_tai_khoan_usmart,
 )
 from he_thong_bao_cao_dkt.tkb_giang_day_sync import (
     chay_dong_bo_tkb_giang_day_toan_trinh,
@@ -461,7 +463,7 @@ def hien_thi_phan_he_giang_vien(
     )
 
     # Hàng nút công cụ nhanh (Action Buttons)
-    b1, b2, b3, b4 = st.columns(4)
+    b1, b2, b3, b4, b5 = st.columns(5)
     if b1.button("🔄 Sao chép công việc lặp lại", use_container_width=True):
         so_moi = db.sao_chep_cong_viec_lap_lai_sang_thang_moi(
             int(thang), int(nam), ma_can_bo=ma_cb_chon
@@ -478,18 +480,54 @@ def hien_thi_phan_he_giang_vien(
         st.info(f"Đã chuyển tiếp {so_ct} nhiệm vụ chưa hoàn thành (giữ nguyên thời hạn gốc).")
         st.rerun()
 
-    if b3.button("🔍 Kiểm tra Ràng buộc Vật lý", use_container_width=True):
+    if b3.button("🔎 Tự rà soát uSmart & Đề xuất việc", use_container_width=True):
+        agent_scan = USmartBaoCaoAgent(
+            usmart_user or gv_hien_tai.tai_khoan_usmart,
+            usmart_pass or lay_mat_khau_usmart_mac_dinh(usmart_user or gv_hien_tai.tai_khoan_usmart),
+        )
+        ds_de_xuat, nhat_ky_scan = agent_scan.ra_soat_va_de_xuat_nhiem_vu_tu_usmart(
+            gv_hien_tai, thang=int(thang), nam=int(nam)
+        )
+        ten_da_co = {nv.nhiem_vu.strip().lower() for nv in bc.danh_sach_nhiem_vu}
+        ds_gop = list(bc.danh_sach_nhiem_vu)
+        so_moi_usmart = 0
+        for nv_dx in ds_de_xuat:
+            if nv_dx.nhiem_vu.strip().lower() not in ten_da_co:
+                ds_gop.append(nv_dx)
+                ten_da_co.add(nv_dx.nhiem_vu.strip().lower())
+                so_moi_usmart += 1
+        if so_moi_usmart > 0:
+            db.cap_nhat_danh_sach_nhiem_vu_thang(ma_cb_chon, int(thang), int(nam), ds_gop)
+            bc = db.doc_bao_cao_ca_nhan(ma_cb_chon, thang=int(thang), nam=int(nam))
+        st.session_state[f"scan_log_{ma_cb_chon}_{thang}_{nam}"] = (
+            ds_de_xuat,
+            nhat_ky_scan,
+            so_moi_usmart,
+        )
+        st.rerun()
+
+    if b4.button("🔍 Kiểm tra Ràng buộc Vật lý", use_container_width=True):
         if kq_kt.hop_le_de_chot:
             st.success(kq_kt.tom_tat_kiem_toan())
         else:
             st.error(kq_kt.tom_tat_kiem_toan())
 
-    if b4.button("📥 Xuất Mẫu 01 (01a Tuần & 01b Tháng .xlsx + .docx)", type="primary", use_container_width=True):
+    if b5.button("📥 Xuất Mẫu 01 (01a Tuần & 01b Tháng .xlsx + .docx)", type="primary", use_container_width=True):
         thu_muc_ky = out_dir / f"Ky_{int(thang):02d}_{int(nam)}"
         f_xlsx = excel_gen.xuat_mau_01_ca_nhan(bc, thu_muc_ky, cap_nhat_ca_bc_tuan=True)
         f_docx = docx_gen.xuat_docx_ca_nhan_01b(bc, thu_muc_ky)
         st.session_state[f"last_mau01_{ma_cb_chon}_{thang}_{nam}"] = [str(f_xlsx), str(f_docx)]
         st.success(f"Đã lưu báo cáo vào vị trí đã chọn:\n- Excel (01a & 01b): `{f_xlsx}`\n- Word bản cứng: `{f_docx}`")
+
+    if st.session_state.get(f"scan_log_{ma_cb_chon}_{thang}_{nam}"):
+        ds_dx_log, nhat_ky_log, so_moi_log = st.session_state[f"scan_log_{ma_cb_chon}_{thang}_{nam}"]
+        with st.expander(
+            f"🔎 Kết quả tự động rà soát nhiệm vụ trên uSmart cho {gv_hien_tai.ho_va_ten} "
+            f"(Phát hiện {len(ds_dx_log)} nhiệm vụ, bổ sung mới {so_moi_log} việc vào CSDL)",
+            expanded=True,
+        ):
+            for dong_nk in nhat_ky_log:
+                st.markdown(f"- {dong_nk}")
 
     if st.session_state.get(f"last_mau01_{ma_cb_chon}_{thang}_{nam}"):
         hien_thi_nut_tai_file_truc_tiep(
@@ -719,9 +757,8 @@ def hien_thi_phan_he_giang_vien(
             unsafe_allow_html=True,
         )
 
-        bw_save, bw_xlsx, bw_usmart = st.columns(3)
-        if bw_save.button("💾 Lưu Báo cáo Tuần (Mẫu 01a) vào CSDL", type="primary", use_container_width=True):
-            so_nv_luu = db.cap_nhat_danh_sach_nhiem_vu_thang(int(ma_cb_chon) if False else ma_cb_chon, int(thang), int(nam), ds_nv_tuan)
+        def _luu_nhanh_01a() -> None:
+            db.cap_nhat_danh_sach_nhiem_vu_thang(ma_cb_chon, int(thang), int(nam), ds_nv_tuan)
             ds_kh_w_moi = [
                 KeHoachKyToi(
                     nhiem_vu=str(r.get("nhiem_vu") or "").strip(),
@@ -734,20 +771,47 @@ def hien_thi_phan_he_giang_vien(
                 if r.get("su_dung", True) and str(r.get("nhiem_vu") or "").strip()
             ]
             db.cap_nhat_ke_hoach_thang_toi(ma_cb_chon, int(thang), int(nam), ds_kh_w_moi)
-            st.success(f"Đã lưu Báo cáo Tuần Mẫu 01a ({so_nv_luu} nhiệm vụ & {len(ds_kh_w_moi)} kế hoạch tuần tới) vào CSDL!")
+            if kien_nghi_w.strip() != bc.de_xuat_kien_nghi.strip():
+                db.cap_nhat_cham_diem_va_chuyen_mon(
+                    ma_can_bo=ma_cb_chon,
+                    thang=int(thang),
+                    nam=int(nam),
+                    hoat_dong_cm=bc.hoat_dong_chuyen_mon,
+                    diem_tu_cham_chung=bc.diem_tu_cham_tieu_chi_chung,
+                    diem_tu_cham_nv=bc.diem_tu_cham_ket_qua_nhiem_vu,
+                    diem_tbm_chung=bc.diem_truong_don_vi_tieu_chi_chung,
+                    diem_tbm_nv=bc.diem_truong_don_vi_ket_qua_nhiem_vu,
+                    de_xuat_kien_nghi=kien_nghi_w.strip(),
+                )
+
+        bw_save, bw_xlsx, bw_usmart = st.columns(3)
+        if bw_save.button("💾 Lưu Báo cáo Tuần (Mẫu 01a) vào CSDL", type="primary", use_container_width=True):
+            _luu_nhanh_01a()
+            st.success(f"Đã lưu Báo cáo Tuần Mẫu 01a ({len(ds_nv_tuan)} nhiệm vụ) vào CSDL!")
             st.rerun()
 
         if bw_xlsx.button("📥 Xuất Sheet 'BC tuần' (Mẫu 01a .xlsx)", use_container_width=True):
+            _luu_nhanh_01a()
+            bc_w = db.doc_bao_cao_ca_nhan(ma_cb_chon, thang=int(thang), nam=int(nam))
             thu_muc_ky = out_dir / f"Ky_{int(thang):02d}_{int(nam)}"
             f_xlsx = excel_gen.xuat_mau_01_ca_nhan(
-                bc, thu_muc_ky, cap_nhat_ca_bc_tuan=True, ngay_thu_hai_tuan=tu_ngay_tuan
+                bc_w, thu_muc_ky, cap_nhat_ca_bc_tuan=True, ngay_thu_hai_tuan=tu_ngay_tuan
             )
+            st.session_state[f"last_mau01_{ma_cb_chon}_{thang}_{nam}"] = [str(f_xlsx)]
             st.success(f"Đã xuất Mẫu 01a (Sheet `BC tuần` Tuần {tuan_so}): `{f_xlsx}`")
 
         if bw_usmart.button("☁️ Nộp Báo cáo Tuần (Mẫu 01a) lên uSmart", use_container_width=True):
-            agent = USmartBaoCaoAgent(usmart_user, usmart_pass)
-            kq_u = agent.gui_bao_cao_webform(bc, ky_id="1", ma_mau="01a", che_do="luu_nhap")
-            st.info(kq_u.thong_bao)
+            _luu_nhanh_01a()
+            bc_w = db.doc_bao_cao_ca_nhan(ma_cb_chon, thang=int(thang), nam=int(nam))
+            agent = USmartBaoCaoAgent(
+                usmart_user or gv_hien_tai.tai_khoan_usmart,
+                usmart_pass or lay_mat_khau_usmart_mac_dinh(usmart_user or gv_hien_tai.tai_khoan_usmart),
+            )
+            kq_u = agent.gui_bao_cao_webform(bc_w, ky_id="1", ma_mau="01a", che_do="nop")
+            if kq_u.thanh_cong:
+                st.success(kq_u.thong_bao)
+            else:
+                st.error(kq_u.thong_bao)
         st.caption(
             "👉 **Quy trình nộp lên uSmart (Nhập dữ liệu tự động sang uSmart):** "
             "Mở [🔗 **Cổng Báo cáo uSmart**](https://usmart.utc.edu.vn/baocaocongviec/) "
@@ -1068,11 +1132,7 @@ def hien_thi_phan_he_giang_vien(
         unsafe_allow_html=True,
     )
 
-    if st.button(
-        "💾 Lưu toàn bộ thay đổi (Mục I, II, III, IV, V) vào CSDL",
-        type="primary",
-        use_container_width=True,
-    ):
+    def _luu_toan_bo_mau_01b_hien_tai() -> tuple[int, int]:
         ds_nv_cap_nhat = _chuyen_edited_rows_thanh_nhiem_vu(edited_rows, ma_cb_chon, gv_hien_tai.ho_va_ten)
         so_nv_luu = db.cap_nhat_danh_sach_nhiem_vu_thang(
             ma_can_bo=ma_cb_chon,
@@ -1133,7 +1193,14 @@ def hien_thi_phan_he_giang_vien(
             nam=int(nam),
             danh_sach_ke_hoach=ds_kh_cap_nhat,
         )
+        return so_nv_luu, so_kh_luu
 
+    if st.button(
+        "💾 Lưu toàn bộ thay đổi (Mục I, II, III, IV, V) vào CSDL",
+        type="primary",
+        use_container_width=True,
+    ):
+        so_nv_luu, so_kh_luu = _luu_toan_bo_mau_01b_hien_tai()
         st.success(
             f"Đã lưu thành công toàn bộ Mẫu 01b ({so_nv_luu} nhiệm vụ tháng này, hoạt động chuyên môn Mục II, "
             f"điểm đánh giá Mục III, {so_kh_luu} kế hoạch tháng tới Mục IV và đề xuất kiến nghị Mục V) vào CSDL!"
@@ -1181,38 +1248,50 @@ def hien_thi_phan_he_giang_vien(
 
     # Khu vực gửi trực tiếp lên uSmart
     st.divider()
-    st.subheader("🚀 Gửi trực tiếp Báo cáo Công việc Tháng (Mẫu 01b) lên Hệ thống uSmart (`usmart.utc.edu.vn/baocaocongviec/`)")
+    st.subheader("🚀 Gửi trực tiếp Báo cáo Công việc Tháng (Mẫu 01b) & Báo cáo Tuần (Mẫu 01a) lên Hệ thống uSmart (`usmart.utc.edu.vn/baocaocongviec/`)")
     st.markdown(
         "📌 **Lộ trình nộp lên uSmart (Nhập dữ liệu tự động sang uSmart):**  \n"
-        "1. Bấm một trong các nút đồng bộ tự động bên dưới ➔ "
+        "1. Bấm một trong các nút đồng bộ tự động bên dưới (Hệ thống tự động lưu dữ liệu đang sửa vào CSDL trước khi gửi) ➔ "
         "2. Mở [**🔗 Cổng Báo cáo uSmart (`https://usmart.utc.edu.vn/baocaocongviec/`)**](https://usmart.utc.edu.vn/baocaocongviec/) ➔ "
         "3. Vào **Giao diện Báo cáo cá nhân** ➔ "
         "4. Chọn **Nhập Web** ➔ "
         "5. **Kiểm tra và Nộp báo cáo**."
     )
+    tk_gui = usmart_user or gv_hien_tai.tai_khoan_usmart
+    mk_gui = usmart_pass or lay_mat_khau_usmart_mac_dinh(tk_gui)
     u1, u2, u3 = st.columns(3)
     if u1.button("☁️ Lưu nháp trực tiếp lên uSmart (An toàn)", use_container_width=True):
-        agent = USmartBaoCaoAgent(usmart_user, usmart_pass)
-        kq_u = agent.gui_bao_cao_webform(bc, ky_id="2", ma_mau="01b", che_do="luu_nhap")
+        _luu_toan_bo_mau_01b_hien_tai()
+        bc_moi = db.doc_bao_cao_ca_nhan(ma_cb_chon, thang=int(thang), nam=int(nam))
+        agent = USmartBaoCaoAgent(tk_gui, mk_gui)
+        kq_u = agent.gui_bao_cao_webform(bc_moi, ky_id="2", ma_mau="01b", che_do="luu_nhap")
         if kq_u.thanh_cong:
             st.success(kq_u.thong_bao)
         else:
             st.error(kq_u.thong_bao)
 
     if u2.button("🚀 Chốt & Nộp chính thức Webform lên uSmart", use_container_width=True):
-        agent = USmartBaoCaoAgent(usmart_user, usmart_pass)
-        kq_u = agent.gui_bao_cao_webform(bc, ky_id="2", ma_mau="01b", che_do="nop")
+        _luu_toan_bo_mau_01b_hien_tai()
+        bc_moi = db.doc_bao_cao_ca_nhan(ma_cb_chon, thang=int(thang), nam=int(nam))
+        agent = USmartBaoCaoAgent(tk_gui, mk_gui)
+        kq_u = agent.gui_bao_cao_webform(bc_moi, ky_id="2", ma_mau="01b", che_do="nop")
         if kq_u.thanh_cong:
             st.success(kq_u.thong_bao)
         else:
             st.warning(kq_u.thong_bao)
 
     if u3.button("📤 Xuất & Upload tệp .xlsx chuẩn lên uSmart", use_container_width=True):
+        _luu_toan_bo_mau_01b_hien_tai()
+        bc_moi = db.doc_bao_cao_ca_nhan(ma_cb_chon, thang=int(thang), nam=int(nam))
         thu_muc_ky = out_dir / f"Ky_{int(thang):02d}_{int(nam)}"
-        f_xlsx = excel_gen.xuat_mau_01_ca_nhan(bc, thu_muc_ky, cap_nhat_ca_bc_tuan=True)
-        agent = USmartBaoCaoAgent(usmart_user, usmart_pass)
-        kq_up = agent.tai_tep_excel_len_usmart(f_xlsx, ky_id="2", ma_mau="01b")
-        st.info(f"Phản hồi từ máy chủ uSmart: {kq_up.thong_bao}")
+        f_xlsx = excel_gen.xuat_mau_01_ca_nhan(bc_moi, thu_muc_ky, cap_nhat_ca_bc_tuan=True)
+        st.session_state[f"last_mau01_{ma_cb_chon}_{thang}_{nam}"] = [str(f_xlsx)]
+        agent = USmartBaoCaoAgent(tk_gui, mk_gui)
+        kq_up = agent.tai_tep_excel_len_usmart(f_xlsx, ky_id="2", ma_mau="01b", bao_cao=bc_moi)
+        if kq_up.thanh_cong:
+            st.success(f"Phản hồi từ máy chủ uSmart: {kq_up.thong_bao}")
+        else:
+            st.warning(f"Phản hồi từ máy chủ uSmart: {kq_up.thong_bao}")
 
 
 def hien_thi_phan_he_dong_bo_admin(
@@ -1361,11 +1440,14 @@ def main() -> None:
     db_path = PROJECT_ROOT / "CSDL_BaoCao_BoMon_DKT_KGN.xlsx"
     db = QuanLyCSDLBộMôn(db_path)
     db.khoi_tao_csdl_mau_neu_chua_co(ghi_de=False)
+    if not st.session_state.get("da_dong_bo_gv_chuan_22"):
+        db.dong_bo_danh_sach_giang_vien_chuan(thang=11, nam=2026)
+        st.session_state["da_dong_bo_gv_chuan_22"] = True
     validator, excel_gen, docx_gen = _khoi_tao_bo_xu_ly_dung_chung()
 
     # Thanh bên (Sidebar): Chọn kỳ báo cáo, Giảng viên, Vị trí lưu file và Tài khoản
     with st.sidebar:
-        st.header("⚙️ Cấu hình Kỳ & Giảng viên")
+        st.header("⚙️ Cấu hình Kỳ & Thành viên")
         col_t, col_n = st.columns(2)
         thang = col_t.number_input("Tháng", min_value=1, max_value=12, value=11)
         nam = col_n.number_input("Năm", min_value=2025, max_value=2030, value=2026)
@@ -1375,14 +1457,61 @@ def main() -> None:
             f"{gv.ma_can_bo} - {gv.ho_va_ten} ({gv.hoc_ham + '.' if gv.hoc_ham else ''}{gv.hoc_vi})": ma
             for ma, gv in ds_gv.items()
         }
-        nhan_mac_dinh = [k for k, v in lua_chon_gv.items() if v == "1051"][0]
+        map_ma_sang_nhan = {v: k for k, v in lua_chon_gv.items()}
+        nhan_mac_dinh = map_ma_sang_nhan.get("1051", list(lua_chon_gv.keys())[0])
+
+        if "sb_chon_gv_label" not in st.session_state or st.session_state["sb_chon_gv_label"] not in lua_chon_gv:
+            st.session_state["sb_chon_gv_label"] = nhan_mac_dinh
+            gv_init = ds_gv[lua_chon_gv[nhan_mac_dinh]]
+            st.session_state["sb_usmart_user"] = gv_init.tai_khoan_usmart
+            st.session_state["sb_usmart_pass"] = lay_mat_khau_usmart_mac_dinh(gv_init.tai_khoan_usmart)
+
+        def _khi_doi_giang_vien() -> None:
+            lbl = st.session_state.get("sb_chon_gv_label", nhan_mac_dinh)
+            mcb = lua_chon_gv.get(lbl, "1051")
+            gv_obj = ds_gv[mcb]
+            st.session_state["sb_usmart_user"] = gv_obj.tai_khoan_usmart
+            st.session_state["sb_usmart_pass"] = lay_mat_khau_usmart_mac_dinh(gv_obj.tai_khoan_usmart)
+
+        def _khi_nhap_tk_usmart() -> None:
+            tk_nhap = st.session_state.get("sb_usmart_user", "").strip()
+            mk_goi_y = lay_mat_khau_usmart_mac_dinh(tk_nhap)
+            if mk_goi_y:
+                st.session_state["sb_usmart_pass"] = mk_goi_y
+            mcb_tim = tim_ma_can_bo_theo_tai_khoan_usmart(tk_nhap)
+            if mcb_tim and mcb_tim in map_ma_sang_nhan:
+                st.session_state["sb_chon_gv_label"] = map_ma_sang_nhan[mcb_tim]
+
         chon_key = st.selectbox(
-            "👤 Chọn Giảng viên",
+            "👤 Chọn Thành viên Bộ môn (22 CB/GV)",
             options=list(lua_chon_gv.keys()),
-            index=list(lua_chon_gv.keys()).index(nhan_mac_dinh),
+            key="sb_chon_gv_label",
+            on_change=_khi_doi_giang_vien,
         )
         ma_cb_chon = lua_chon_gv[chon_key]
         gv_hien_tai = ds_gv[ma_cb_chon]
+
+        st.divider()
+        st.subheader("🔐 Tài khoản Nộp Báo cáo uSmart")
+        usmart_user = st.text_input(
+            "Tài khoản uSmart Cá nhân",
+            key="sb_usmart_user",
+            on_change=_khi_nhap_tk_usmart,
+            help="Nhập tài khoản uSmart (ví dụ: giangntt, ducla, linhnt2, hanh1, lannc...) để tự động chuyển sang đúng cán bộ và điền mật khẩu đã cấu hình.",
+        )
+        usmart_pass = st.text_input(
+            "Mật khẩu uSmart Cá nhân",
+            type="password",
+            key="sb_usmart_pass",
+            placeholder="Nhập mật khẩu uSmart cá nhân...",
+        )
+        st.caption(
+            "💡 **Tài khoản đã cấu hình sẵn:** `giangntt` (`123456`), `ducla` (`123456`), `linhnt2` (`30032013`), `hanh1`, `lannc`."
+        )
+        st.markdown(
+            "🔗 [Mở Cổng Báo cáo uSmart](https://usmart.utc.edu.vn/baocaocongviec/)  \n"
+            "📂 [Mở Thư mục Google Drive Bộ môn](https://drive.google.com/drive/folders/1jawTokjmk-hnBsuoEIHoxYUhSRCEItPd)"
+        )
 
         st.divider()
         st.subheader("📂 Lựa chọn Vị trí Lưu File")
@@ -1406,15 +1535,6 @@ def main() -> None:
             )
         out_dir = xac_dinh_thu_muc_luu_file(kieu_vi_tri, duong_dan_tuy_chinh)
         st.caption(f"📍 **Đang lưu tại:** `{out_dir}`")
-
-        st.divider()
-        st.subheader("🔐 Tài khoản Nộp Báo cáo uSmart")
-        usmart_user = st.text_input("Tài khoản uSmart Cá nhân", value=gv_hien_tai.tai_khoan_usmart or "hanh1")
-        usmart_pass = st.text_input("Mật khẩu uSmart Cá nhân", value="", type="password", placeholder="Nhập mật khẩu uSmart cá nhân...")
-        st.markdown(
-            "🔗 [Mở Cổng Báo cáo uSmart](https://usmart.utc.edu.vn/baocaocongviec/)  \n"
-            "📂 [Mở Thư mục Google Drive Bộ môn](https://drive.google.com/drive/folders/1jawTokjmk-hnBsuoEIHoxYUhSRCEItPd)"
-        )
 
         st.divider()
         with st.expander("🛡️ Đăng nhập Quản trị viên (Admin)", expanded=False):
@@ -1463,6 +1583,8 @@ def main() -> None:
         key="nav_kieu_bao_cao_chinh",
     )
 
+    mk_hien_tai = usmart_pass or lay_mat_khau_usmart_mac_dinh(usmart_user or gv_hien_tai.tai_khoan_usmart) or "182128"
+
     if kieu_bao_cao_chon.startswith("📄 1."):
         hien_thi_phan_he_giang_vien(
             db=db,
@@ -1475,7 +1597,7 @@ def main() -> None:
             nam=int(nam),
             out_dir=out_dir,
             usmart_user=usmart_user,
-            usmart_pass=usmart_pass or "182128",
+            usmart_pass=mk_hien_tai,
         )
     elif kieu_bao_cao_chon.startswith("📋 2."):
         hien_thi_giao_viec_va_theo_doi_mau_03(
@@ -1496,7 +1618,7 @@ def main() -> None:
             db_path=db_path,
             ma_cb_chon=ma_cb_chon,
             usmart_user=usmart_user,
-            usmart_pass=usmart_pass or "182128",
+            usmart_pass=mk_hien_tai,
         )
     elif is_admin and kieu_bao_cao_chon.startswith("🔄 4."):
         hien_thi_phan_he_dong_bo_admin(

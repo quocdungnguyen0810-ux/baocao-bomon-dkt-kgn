@@ -99,11 +99,11 @@ class TestStage6NCKHSync(unittest.TestCase):
             self.assertEqual(wb.sheetnames, expected_sheets)
             wb.close()
 
-            # Kiểm tra CSDL Báo cáo tháng sau khi đồng bộ NCKH phải đạt 100% kiểm toán vật lý cho cả 21 GV
+            # Kiểm tra CSDL Báo cáo tháng sau khi đồng bộ NCKH phải đạt 100% kiểm toán vật lý cho cả 22 thành viên
             db = QuanLyCSDLBộMôn(csdl_tmp)
             validator = BoKiemTraRangBuocVatLy()
             ds_bc = db.doc_toan_bo_bao_cao_bo_mon(thang=11, nam=2026)
-            self.assertEqual(len(ds_bc), 21)
+            self.assertEqual(len(ds_bc), 22)
             for bc in ds_bc:
                 audit = validator.kiem_tra_bao_cao_ca_nhan(bc)
                 self.assertTrue(audit.hop_le_de_chot, f"GV {bc.giang_vien.ho_va_ten} có lỗi kiểm toán: {audit.vung_cach_ly}")

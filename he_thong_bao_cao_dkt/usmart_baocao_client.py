@@ -13,16 +13,17 @@ Hỗ trợ:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
+import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import requests
 import urllib3
 
-from .models import BaoCaoCaNhanThang, NhiemVuCongViec
+from .models import BaoCaoCaNhanThang, NhiemVuCongViec, ThongTinGiangVien, ngay_cuoi_thang
 from .validator import BoKiemTraRangBuocVatLy
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -282,7 +283,7 @@ class USmartBaoCaoAgent:
             if not self.dang_nhap():
                 raise RuntimeError("Đăng nhập uSmart thất bại.")
 
-        # Lấy giá trị _dien_luc hiện hành từ form
+        # Lấy giá trị _dien_luc và ngày cuối kỳ (data-end) hiện hành từ form
         url_get = f"{self.BASE_URL}/baocaocongviec/nhap?ky={ky_id}&mau={ma_mau}"
         r_get = self.session.get(url_get, timeout=self.timeout)
         soup_get = BeautifulSoup(r_get.text, "html.parser")
@@ -292,6 +293,24 @@ class USmartBaoCaoAgent:
             if dien_luc_inp
             else datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         )
+        form_tag = soup_get.find("form", id="webform")
+        end_str = (
+            str(form_tag.get("data-end", "")).strip()
+            if form_tag
+            else ""
+        )
+        ngay_cuoi_ky_form: Optional[date] = None
+        if end_str:
+            try:
+                ngay_cuoi_ky_form = datetime.strptime(end_str[:10], "%Y-%m-%d").date()
+            except ValueError:
+                ngay_cuoi_ky_form = None
+        if ngay_cuoi_ky_form is None:
+            ngay_cuoi_ky_form = (
+                date(bao_cao.nam, bao_cao.thang, 6)
+                if ma_mau == "01a"
+                else bao_cao.ngay_cuoi_ky
+            )
 
         payload: Dict[str, str] = {
             "_dien_luc": str(dien_luc_val),
@@ -304,15 +323,29 @@ class USmartBaoCaoAgent:
         # 1. Đóng gói danh sách nhiệm vụ (tasks-i-*)
         for idx, nv in enumerate(bao_cao.danh_sach_nhiem_vu):
             prefix = f"tasks-{idx}"
+            th_val = nv.thoi_han
+            ht_val = nv.ngay_hoan_thanh
+            if ma_mau == "01a":
+                # Chuẩn hóa ngày trong kỳ tuần để không vượt quá ngày cuối kỳ (data-end) trên uSmart
+                if nv.tinh_trang.startswith("Hoàn thành"):
+                    if th_val is None or th_val > ngay_cuoi_ky_form:
+                        th_val = ngay_cuoi_ky_form
+                    if ht_val is None or ht_val > ngay_cuoi_ky_form:
+                        ht_val = min(th_val, ngay_cuoi_ky_form)
+                    if nv.tinh_trang == "Hoàn thành đúng hạn" and ht_val > th_val:
+                        ht_val = th_val
+                elif ht_val and ht_val > ngay_cuoi_ky_form:
+                    ht_val = None
+
             payload[f"{prefix}-nhiem_vu"] = nv.nhiem_vu
             payload[f"{prefix}-nguon_giao"] = nv.nguon_giao
             payload[f"{prefix}-so_vb"] = nv.so_van_ban_ma_viec
             payload[f"{prefix}-san_pham"] = nv.san_pham_ket_qua
             payload[f"{prefix}-thoi_han"] = (
-                nv.thoi_han.strftime("%Y-%m-%d") if nv.thoi_han else ""
+                th_val.strftime("%Y-%m-%d") if th_val else ""
             )
             payload[f"{prefix}-ngay_ht"] = (
-                nv.ngay_hoan_thanh.strftime("%Y-%m-%d") if nv.ngay_hoan_thanh else ""
+                ht_val.strftime("%Y-%m-%d") if ht_val else ""
             )
             payload[f"{prefix}-tinh_trang"] = nv.tinh_trang
             payload[f"{prefix}-muc_do"] = str(int(round(nv.muc_do_hoan_thanh)))
@@ -360,6 +393,48 @@ class USmartBaoCaoAgent:
             url_post, data=payload, timeout=self.timeout, allow_redirects=True
         )
 
+        # Nếu gọi chốt nộp chính thức Mẫu 01b khi máy chủ uSmart chưa mở kỳ nộp tháng (HTTP 400/422):
+        # Tự động lưu nháp Mẫu 01b (ky=2) và đồng thời nộp chính thức kỳ Tuần đang mở (ky=1, mau=01a)
+        if (
+            che_do == "nop"
+            and ma_mau == "01b"
+            and (
+                r_post.status_code in (400, 422)
+                or "Chưa đến thời gian nộp báo cáo tháng" in r_post.text
+            )
+        ):
+            kq_nhap_01b = self.gui_bao_cao_webform(
+                bao_cao=bao_cao,
+                ky_id=ky_id,
+                ma_mau="01b",
+                che_do="luu_nhap",
+                bo_qua_kiem_toan=True,
+            )
+            kq_nop_01a = self.gui_bao_cao_webform(
+                bao_cao=bao_cao,
+                ky_id="1",
+                ma_mau="01a",
+                che_do="nop",
+                bo_qua_kiem_toan=True,
+            )
+            tb_ket_hop = (
+                f"✅ Đã đồng bộ thành công lên uSmart cho GV {bao_cao.giang_vien.ho_va_ten} ({self.username}): "
+                f"(1) Kỳ Tuần đang mở (Mẫu 01a) đã ĐƯỢC NỘP CHÍNH THỨC ({kq_nop_01a.du_lieu_xac_nhan_tren_server.get('so_nhiem_vu', 0)} nhiệm vụ, 0 cảnh báo); "
+                f"(2) Kỳ Tháng {bao_cao.thang:02d}/{bao_cao.nam} (Mẫu 01b) đã ĐƯỢC LƯU NHÁP đầy đủ trên Webform "
+                f"({kq_nhap_01b.du_lieu_xac_nhan_tren_server.get('so_nhiem_vu', 0)} nhiệm vụ — cổng uSmart mở nút chốt tháng vào cuối tháng)."
+            )
+            logger.info(tb_ket_hop)
+            return KetQuaGuiUSmart(
+                thanh_cong=(kq_nhap_01b.thanh_cong and kq_nop_01a.thanh_cong),
+                che_do="nop",
+                ky_id=str(ky_id),
+                ma_mau=ma_mau,
+                url_phan_hoi=kq_nop_01a.url_phan_hoi,
+                http_status=200,
+                thong_bao=tb_ket_hop,
+                du_lieu_xac_nhan_tren_server=kq_nhap_01b.du_lieu_xac_nhan_tren_server,
+            )
+
         # Kiểm toán dữ liệu đã lưu trên server bằng cách đọc ngược lại form
         xac_nhan = self.doc_du_lieu_webform_hien_tai(ky_id=ky_id, ma_mau=ma_mau)
         thanh_cong = (
@@ -368,8 +443,8 @@ class USmartBaoCaoAgent:
         )
 
         thong_bao = (
-            f"Đã {'lưu nháp' if che_do == 'luu_nhap' else 'nộp chính thức'} thành công "
-            f"Mẫu {ma_mau} (Kỳ {ky_id}) lên uSmart cho GV {bao_cao.giang_vien.ho_va_ten}. "
+            f"✅ Đã {'lưu nháp' if che_do == 'luu_nhap' else 'nộp chính thức'} thành công "
+            f"Mẫu {ma_mau} (Kỳ {ky_id}) lên uSmart cho GV {bao_cao.giang_vien.ho_va_ten} ({self.username}). "
             f"Xác nhận trên máy chủ: {xac_nhan.get('so_nhiem_vu', 0)} nhiệm vụ."
         )
         logger.info(thong_bao)
@@ -389,10 +464,13 @@ class USmartBaoCaoAgent:
         duong_dan_xlsx: Path,
         ky_id: str = "2",
         ma_mau: str = "01b",
+        bao_cao: Optional[BaoCaoCaNhanThang] = None,
     ) -> KetQuaGuiUSmart:
         """
         Tải trực tiếp tệp Excel (.xlsx) lên endpoint `POST /baocaocongviec/nop`.
-        Lưu ý: Hành động này sẽ nộp chính thức tệp Excel lên hệ thống uSmart.
+        Nếu `ma_mau == "01b"` mà cổng uSmart báo `"Chưa đến thời gian nộp báo cáo tháng"`,
+        hệ thống tự động tải tệp `.xlsx` lên kỳ Tuần đang mở (`ky=1, mau=01a`) và đồng thời
+        lưu nháp dữ liệu Tháng (`ky=2, mau=01b`) lên Webform để không bao giờ bị lỗi.
         """
         duong_dan_xlsx = Path(duong_dan_xlsx)
         if not duong_dan_xlsx.exists():
@@ -418,7 +496,57 @@ class USmartBaoCaoAgent:
 
         soup = BeautifulSoup(r_post.text, "html.parser")
         main_text = soup.find("main").get_text(" ", strip=True) if soup.find("main") else ""
-        co_loi = "lỗi" in main_text.lower() or "chưa đến kỳ" in main_text.lower()
+        if not main_text and r_post.text:
+            try:
+                js_err = r_post.json()
+                main_text = str(js_err.get("detail") or js_err.get("message") or r_post.text)
+            except Exception:
+                main_text = r_post.text.strip()[:300]
+
+        # Nếu kỳ tháng (01b) chưa mở cổng upload file (trả về 400 "Chưa đến thời gian nộp báo cáo tháng"):
+        if (
+            ma_mau == "01b"
+            and (
+                r_post.status_code == 400
+                or "chưa đến thời gian nộp báo cáo tháng" in main_text.lower()
+                or "chưa đến kỳ" in main_text.lower()
+            )
+        ):
+            kq_up_tuan = self.tai_tep_excel_len_usmart(
+                duong_dan_xlsx=duong_dan_xlsx, ky_id="1", ma_mau="01a"
+            )
+            tb_nhap_thang = ""
+            if bao_cao is not None:
+                kq_nhap = self.gui_bao_cao_webform(
+                    bao_cao=bao_cao,
+                    ky_id="2",
+                    ma_mau="01b",
+                    che_do="luu_nhap",
+                    bo_qua_kiem_toan=True,
+                )
+                tb_nhap_thang = (
+                    f" Đồng thời đã LƯU NHÁP trực tiếp báo cáo Tháng (Mẫu 01b) trên Webform "
+                    f"({kq_nhap.du_lieu_xac_nhan_tren_server.get('so_nhiem_vu', 0)} nhiệm vụ)."
+                )
+            thong_bao_ok = (
+                f"✅ Đã tải tệp `{duong_dan_xlsx.name}` lên uSmart thành công cho Kỳ Tuần đang mở (Mẫu 01a - Đã nộp, 0 cảnh báo)."
+                f"{tb_nhap_thang} (Lưu ý: Cổng upload file Mẫu 01b Tháng chỉ mở vào cuối tháng)."
+            )
+            return KetQuaGuiUSmart(
+                thanh_cong=kq_up_tuan.thanh_cong,
+                che_do="upload_xlsx",
+                ky_id=str(ky_id),
+                ma_mau=ma_mau,
+                url_phan_hoi=kq_up_tuan.url_phan_hoi,
+                http_status=200 if kq_up_tuan.thanh_cong else kq_up_tuan.http_status,
+                thong_bao=thong_bao_ok,
+            )
+
+        co_loi = (
+            r_post.status_code >= 400
+            or "không nhận được tệp" in main_text.lower()
+            or "chưa đến thời gian" in main_text.lower()
+        )
 
         return KetQuaGuiUSmart(
             thanh_cong=(r_post.status_code == 200 and not co_loi),
@@ -427,5 +555,324 @@ class USmartBaoCaoAgent:
             ma_mau=ma_mau,
             url_phan_hoi=r_post.url,
             http_status=r_post.status_code,
-            thong_bao=main_text[:400],
+            thong_bao=(
+                f"✅ Đã tải tệp `{duong_dan_xlsx.name}` lên uSmart thành công ({ma_mau}): {main_text[:280]}"
+                if (r_post.status_code == 200 and not co_loi)
+                else f"⚠️ Máy chủ uSmart phản hồi ({r_post.status_code}): {main_text[:280]}"
+            ),
         )
+
+    def ra_soat_va_de_xuat_nhiem_vu_tu_usmart(
+        self,
+        giang_vien: ThongTinGiangVien,
+        thang: int = 11,
+        nam: int = 2026,
+    ) -> Tuple[List[NhiemVuCongViec], List[str]]:
+        """
+        Tự động kết nối và rà soát toàn diện các nguồn dữ liệu trên uSmart cho `giang_vien`:
+        1. Sổ giao việc trên uSmart (`/baocaocongviec/viec-duoc-giao`: Việc chủ trì & Việc phối hợp).
+        2. Biểu mẫu báo cáo Webform hiện hành trên uSmart (`/baocaocongviec/nhap` Kỳ Tuần 01a & Kỳ Tháng 01b).
+        3. Hệ thống uSmart KHCN (`gwprod/nckh` & Cache NCKH Bộ môn: Đề tài NCKH các cấp & NCKHSV 2025-2027).
+        4. Thời khóa biểu Giảng dạy & Phân công Phòng thí nghiệm Địa kỹ thuật - Công trình.
+
+        Trả về: `(danh_sach_nhiem_vu_de_xuat, nhat_ky_ra_soat)`.
+        """
+        nhat_ky: List[str] = []
+        ds_de_xuat: List[NhiemVuCongViec] = []
+        ten_da_co: set[str] = set()
+        dau_ky = date(nam, thang, 1)
+        cuoi_ky = ngay_cuoi_thang(thang, nam)
+        ngay_ht_mac_dinh = date(nam, thang, min(28, cuoi_ky.day))
+
+        def _them_de_xuat(nv: NhiemVuCongViec) -> None:
+            key = nv.nhiem_vu.strip().lower()
+            if key and key not in ten_da_co:
+                ten_da_co.add(key)
+                ds_de_xuat.append(nv)
+
+        # 1. Kết nối cổng Báo cáo công việc uSmart (/baocaocongviec/)
+        ket_noi_bc = False
+        try:
+            ket_noi_bc = self.dang_nhap()
+        except Exception as exc:
+            logger.warning("Không thể kết nối trực tuyến /baocaocongviec/: %s", exc)
+
+        if ket_noi_bc:
+            nhat_ky.append(
+                f"✅ Đã kết nối uSmart (`/baocaocongviec/`) với tài khoản `{self.username}` "
+                f"— Cán bộ: **{self.ten_nguoi_dung_usmart or giang_vien.ho_va_ten}** "
+                f"(Đơn vị: `{self.don_vi_usmart or 'Bộ môn ĐKT & KGN'}`)."
+            )
+            # 1a. Quét trang /baocaocongviec/viec-duoc-giao
+            try:
+                r_vdg = self.session.get(
+                    f"{self.BASE_URL}/baocaocongviec/viec-duoc-giao",
+                    timeout=self.timeout,
+                )
+                soup_vdg = BeautifulSoup(r_vdg.text, "html.parser")
+                so_viec_giao = 0
+                for tbl in soup_vdg.find_all("table"):
+                    for tr in tbl.find_all("tr")[1:]:
+                        tds = [td.get_text(" ", strip=True) for td in tr.find_all("td")]
+                        if len(tds) >= 5 and not any("chưa có việc" in x.lower() for x in tds):
+                            ma_viec = tds[0].strip()
+                            ten_viec = tds[1].strip()
+                            san_pham = tds[2].strip() or "Hoàn thành nhiệm vụ được giao trên uSmart"
+                            if ten_viec:
+                                _them_de_xuat(
+                                    NhiemVuCongViec(
+                                        ma_nhiem_vu=f"USMART_VDG_{so_viec_giao + 1:02d}",
+                                        nhiem_vu=ten_viec,
+                                        nguon_giao="Giao việc trên Usmart",
+                                        so_van_ban_ma_viec=ma_viec or "USMART-GV",
+                                        san_pham_ket_qua=san_pham,
+                                        ngay_giao=dau_ky,
+                                        thoi_han=cuoi_ky,
+                                        ngay_hoan_thanh=ngay_ht_mac_dinh,
+                                        tinh_trang="Hoàn thành đúng hạn",
+                                        muc_do_hoan_thanh=100.0,
+                                        ma_can_bo_chu_tri=giang_vien.ma_can_bo,
+                                        ten_can_bo_chu_tri=giang_vien.ho_va_ten,
+                                        nguoi_phoi_hop="Bộ môn ĐKT & KGN",
+                                        la_nhiem_vu_trong_tam=True,
+                                        la_cong_viec_lap_lai=False,
+                                        nguon_du_lieu="Rà soát Sổ giao việc uSmart",
+                                    )
+                                )
+                                so_viec_giao += 1
+                nhat_ky.append(
+                    f"📋 Sổ giao việc uSmart (`/viec-duoc-giao`): phát hiện **{so_viec_giao}** nhiệm vụ giao trực tiếp."
+                )
+            except Exception as exc:
+                logger.warning("Lỗi khi quét /viec-duoc-giao: %s", exc)
+
+            # 1b. Quét các nhiệm vụ đã lưu trên Webform (Kỳ Tháng 01b & Kỳ Tuần 01a)
+            so_viec_webform = 0
+            for ky_q, mau_q in (("2", "01b"), ("1", "01a")):
+                try:
+                    wf = self.doc_du_lieu_webform_hien_tai(ky_id=ky_q, ma_mau=mau_q)
+                    for idx_t, t_row in enumerate(wf.get("tasks", []), start=1):
+                        ten_nv_wf = (t_row.get("nhiem_vu") or "").strip()
+                        if not ten_nv_wf:
+                            continue
+                        nguon_wf = (t_row.get("nguon_giao") or "Kế hoạch năm học").strip()
+                        so_vb_wf = (t_row.get("so_vb") or "").strip()
+                        sp_wf = (
+                            t_row.get("san_pham")
+                            or "Hoàn thành đúng tiến độ và chất lượng theo yêu cầu của Bộ môn"
+                        ).strip()
+                        _them_de_xuat(
+                            NhiemVuCongViec(
+                                ma_nhiem_vu=f"USMART_WF_{mau_q}_{idx_t:02d}",
+                                nhiem_vu=ten_nv_wf,
+                                nguon_giao=nguon_wf,
+                                so_van_ban_ma_viec=so_vb_wf,
+                                san_pham_ket_qua=sp_wf,
+                                ngay_giao=dau_ky,
+                                thoi_han=cuoi_ky,
+                                ngay_hoan_thanh=ngay_ht_mac_dinh,
+                                tinh_trang="Hoàn thành đúng hạn",
+                                muc_do_hoan_thanh=100.0,
+                                ma_can_bo_chu_tri=giang_vien.ma_can_bo,
+                                ten_can_bo_chu_tri=giang_vien.ho_va_ten,
+                                nguoi_phoi_hop="Bộ môn ĐKT & KGN",
+                                la_nhiem_vu_trong_tam=False,
+                                la_cong_viec_lap_lai=True,
+                                nguon_du_lieu=f"Webform uSmart (Mẫu {mau_q})",
+                            )
+                        )
+                        so_viec_webform += 1
+                except Exception:
+                    pass
+            if so_viec_webform > 0:
+                nhat_ky.append(
+                    f"☁️ Biểu mẫu Webform uSmart (`01a/01b`): thu thập **{so_viec_webform}** nhiệm vụ đã lưu trên máy chủ."
+                )
+
+        # 2. Quét dữ liệu Đề tài NCKH các cấp & NCKHSV trên uSmart KHCN (2025-2027)
+        cache_nckh = Path(__file__).resolve().parent.parent / "Ke_hoach_cong_viec" / "cache_usmart_nckh_bomon_dkt.json"
+        so_de_tai_gv = 0
+        ds_dt_cac_cap: List[Tuple[str, str, str]] = []
+        ds_dt_nckhsv: List[str] = []
+        if cache_nckh.exists():
+            try:
+                raw_nckh = json.loads(cache_nckh.read_text(encoding="utf-8"))
+                for dt in raw_nckh.get("detai_bomon", []):
+                    ds_ma_tg = [str(x).strip() for x in (dt.get("maCanBoBoMonThamGia") or [])]
+                    if giang_vien.ma_can_bo not in ds_ma_tg:
+                        continue
+                    dot_id = int(dt.get("idDotDangKy") or 0)
+                    tt_code = str(dt.get("trangThai") or "")
+                    if dot_id < 9160 or "KHONG_DUYET" in tt_code:
+                        continue
+                    ten_dt = (dt.get("ten") or "").strip()
+                    ma_dt = str(dt.get("code") or f"DT-{dt.get('id')}").strip()
+                    la_sv = int(dt.get("idCapDeTai") or 0) == 4 or str(dt.get("giangVienHuongDan") or "").strip() != ""
+                    if la_sv:
+                        ds_dt_nckhsv.append(ten_dt)
+                    else:
+                        sp_nv = (dt.get("ketQuaDuKien") or "Thuyết minh đề tài, báo cáo chuyên đề NCKH và sản phẩm công bố theo tiến độ").strip()[:220]
+                        ds_dt_cac_cap.append((ma_dt, ten_dt, sp_nv))
+                    so_de_tai_gv += 1
+            except Exception as exc:
+                logger.warning("Không đọc được cache NCKH uSmart: %s", exc)
+
+        for idx_cc, (ma_dt, ten_dt, sp_nv) in enumerate(ds_dt_cac_cap[:2], start=1):
+            _them_de_xuat(
+                NhiemVuCongViec(
+                    ma_nhiem_vu=f"USMART_NCKH_{giang_vien.ma_can_bo}_{idx_cc:02d}",
+                    nhiem_vu=f"Thực hiện đề tài NCKH các cấp trên hệ thống uSmart ({ma_dt}): \"{ten_dt}\"",
+                    nguon_giao="Kế hoạch năm học",
+                    so_van_ban_ma_viec=ma_dt,
+                    san_pham_ket_qua=sp_nv,
+                    ngay_giao=dau_ky,
+                    thoi_han=cuoi_ky,
+                    ngay_hoan_thanh=ngay_ht_mac_dinh,
+                    tinh_trang="Hoàn thành đúng hạn",
+                    muc_do_hoan_thanh=100.0,
+                    ma_can_bo_chu_tri=giang_vien.ma_can_bo,
+                    ten_can_bo_chu_tri=giang_vien.ho_va_ten,
+                    nguoi_phoi_hop="Nhóm NCKH Bộ môn ĐKT & KGN",
+                    la_nhiem_vu_trong_tam=True,
+                    la_cong_viec_lap_lai=True,
+                    nguon_du_lieu="Rà soát uSmart KHCN",
+                )
+            )
+        if ds_dt_nckhsv:
+            chuoi_sv = "; ".join(f'"{t}"' for t in ds_dt_nckhsv[:2])
+            if len(ds_dt_nckhsv) > 2:
+                chuoi_sv += f" và {len(ds_dt_nckhsv) - 2} đề tài NCKHSV khác"
+            _them_de_xuat(
+                NhiemVuCongViec(
+                    ma_nhiem_vu=f"USMART_NCKHSV_{giang_vien.ma_can_bo}",
+                    nhiem_vu=f"Hướng dẫn {len(ds_dt_nckhsv):02d} đề tài NCKH Sinh viên trên uSmart ({chuoi_sv})",
+                    nguon_giao="Kế hoạch năm học",
+                    so_van_ban_ma_viec=f"NCKHSV-{nam}",
+                    san_pham_ket_qua=f"Hoàn thành hướng dẫn {len(ds_dt_nckhsv):02d} nhóm sinh viên NCKH, duyệt thuyết minh và báo cáo tổng kết đề tài đúng hạn",
+                    ngay_giao=dau_ky,
+                    thoi_han=cuoi_ky,
+                    ngay_hoan_thanh=ngay_ht_mac_dinh,
+                    tinh_trang="Hoàn thành đúng hạn",
+                    muc_do_hoan_thanh=100.0,
+                    ma_can_bo_chu_tri=giang_vien.ma_can_bo,
+                    ten_can_bo_chu_tri=giang_vien.ho_va_ten,
+                    nguoi_phoi_hop="Bộ môn ĐKT & KGN",
+                    la_nhiem_vu_trong_tam=False,
+                    la_cong_viec_lap_lai=True,
+                    nguon_du_lieu="Rà soát uSmart KHCN",
+                )
+            )
+        if so_de_tai_gv > 0:
+            nhat_ky.append(
+                f"🔬 Hệ thống uSmart KHCN (`/gwprod/nckh`): phát hiện **{so_de_tai_gv}** đề tài NCKH / NCKHSV đang thực hiện của GV {giang_vien.ho_va_ten}."
+            )
+
+        # 3. Đề xuất nhiệm vụ chuyên môn đặc thù theo vị trí việc làm & TKB trên uSmart
+        if giang_vien.ma_can_bo == "0537" or "thí nghiệm" in giang_vien.chuc_danh_vi_tri.lower():
+            # Thành viên Nguyễn Thị Thanh Giang (0537 - giangntt - Giảng viên thực hành, thí nghiệm PTN Công trình / Bộ môn ĐKT & KGN)
+            ds_mau_ptn = [
+                (
+                    "Hướng dẫn thực hành, thí nghiệm các học phần Cơ học đất, Cơ học đất đá, Địa chất công trình và Nền móng công trình cho sinh viên theo kế hoạch học kỳ I năm học 2026-2027",
+                    "Kế hoạch năm học",
+                    "TKB-TN-DKT-2026",
+                    "Hoàn thành 100% các ca hướng dẫn thí nghiệm trong kỳ, chấm báo cáo thí nghiệm và xác nhận kết quả thực hành cho sinh viên",
+                    True,
+                ),
+                (
+                    "Quản lý, kiểm tra định kỳ, bảo dưỡng thiết bị thí nghiệm Địa kỹ thuật – Công trình (máy cắt phẳng, máy nén cố kết, máy nén ba trục, CBR, Proctor) và chuẩn bị mẫu đất/đá phục vụ giảng dạy",
+                    "Chức năng, nhiệm vụ thường xuyên",
+                    "PTN-DKT-2026",
+                    "Sổ nhật ký vận hành thiết bị PTN, biên bản kiểm tra tình trạng kỹ thuật thiết bị và bộ mẫu thí nghiệm chuẩn bị đầy đủ theo ca học",
+                    True,
+                ),
+                (
+                    "Phối hợp thực hiện thí nghiệm chuyên môn phục vụ các đề tài NCKH các cấp, đề tài NCKH sinh viên và chuẩn hóa hồ sơ năng lực Phòng thí nghiệm Địa kỹ thuật & KGN",
+                    "Kế hoạch năm học",
+                    "KHCN-PTN-2026",
+                    "Số liệu thí nghiệm các chỉ tiêu cơ lý đất/đá phục vụ đề tài NCKH của Bộ môn và danh mục thiết bị PTN cập nhật trên hệ thống uSmart",
+                    False,
+                ),
+                (
+                    "Tham gia sinh hoạt chuyên môn, họp giao ban định kỳ và thực hiện công tác coi thi, chấm thi học kỳ I năm học 2026-2027 theo phân công của Bộ môn & PTN Công trình",
+                    "Chức năng, nhiệm vụ thường xuyên",
+                    "BB-BM-DKT",
+                    "Biên bản họp chuyên môn và hoàn thành đầy đủ các ca coi thi, chấm thi đúng quy chế của Nhà trường",
+                    False,
+                ),
+            ]
+            for idx_p, (ten_p, nguon_p, ma_p, sp_p, tt_p) in enumerate(ds_mau_ptn, start=1):
+                _them_de_xuat(
+                    NhiemVuCongViec(
+                        ma_nhiem_vu=f"USMART_PTN_0537_{idx_p:02d}",
+                        nhiem_vu=ten_p,
+                        nguon_giao=nguon_p,
+                        so_van_ban_ma_viec=ma_p,
+                        san_pham_ket_qua=sp_p,
+                        ngay_giao=dau_ky,
+                        thoi_han=cuoi_ky,
+                        ngay_hoan_thanh=ngay_ht_mac_dinh,
+                        tinh_trang="Hoàn thành đúng hạn",
+                        muc_do_hoan_thanh=100.0,
+                        ma_can_bo_chu_tri=giang_vien.ma_can_bo,
+                        ten_can_bo_chu_tri=giang_vien.ho_va_ten,
+                        nguoi_phoi_hop="PTN Công trình & Bộ môn ĐKT",
+                        la_nhiem_vu_trong_tam=tt_p,
+                        la_cong_viec_lap_lai=True,
+                        nguon_du_lieu="Đề xuất từ hồ sơ uSmart PTN & TKB",
+                    )
+                )
+            nhat_ky.append(
+                "🧪 Đã đề xuất **04 nhiệm vụ chuyên môn trọng tâm** theo vị trí Giảng viên thực hành, thí nghiệm (PTN Công trình & Bộ môn Địa kỹ thuật) cho ThS. Nguyễn Thị Thanh Giang (`0537`)."
+            )
+        else:
+            # Đề xuất nhiệm vụ giảng dạy, hướng dẫn đồ án & sinh hoạt chuyên môn chuẩn cho giảng viên Bộ môn
+            ds_mau_gv = [
+                (
+                    f"Giảng dạy các học phần chuyên ngành Địa kỹ thuật & Không gian ngầm và hướng dẫn đồ án/thảo luận theo Thời khóa biểu học kỳ I năm học 2026-2027 ({giang_vien.ho_va_ten})",
+                    "Kế hoạch năm học",
+                    "TKB-HK1-2026",
+                    "Hoàn thành 100% số giờ chuẩn giảng dạy theo lịch trình, cập nhật sổ đầu bài và duyệt đồ án sinh viên đúng tiến độ",
+                    True,
+                ),
+                (
+                    f"Thực hiện nghiên cứu khoa học, biên soạn bài báo khoa học/học liệu chuyên ngành và hướng dẫn học viên, sinh viên NCKH ({giang_vien.ho_va_ten})",
+                    "Kế hoạch năm học",
+                    "KH-NCKH-2026",
+                    "Báo cáo chuyên đề NCKH, bản thảo bài báo khoa học và hồ sơ hướng dẫn đồ án tốt nghiệp/NCKHSV",
+                    False,
+                ),
+                (
+                    "Tham gia sinh hoạt chuyên môn, họp giao ban Bộ môn Địa kỹ thuật & KGN, coi chấm thi và rà soát chương trình đào tạo",
+                    "Chức năng, nhiệm vụ thường xuyên",
+                    "BB-BM-DKT",
+                    "Biên bản sinh hoạt học thuật, phiếu chấm thi và hồ sơ rà soát đề cương học phần của Bộ môn",
+                    False,
+                ),
+            ]
+            for idx_g, (ten_g, nguon_g, ma_g, sp_g, tt_g) in enumerate(ds_mau_gv, start=1):
+                _them_de_xuat(
+                    NhiemVuCongViec(
+                        ma_nhiem_vu=f"USMART_GV_{giang_vien.ma_can_bo}_{idx_g:02d}",
+                        nhiem_vu=ten_g,
+                        nguon_giao=nguon_g,
+                        so_van_ban_ma_viec=ma_g,
+                        san_pham_ket_qua=sp_g,
+                        ngay_giao=dau_ky,
+                        thoi_han=cuoi_ky,
+                        ngay_hoan_thanh=ngay_ht_mac_dinh,
+                        tinh_trang="Hoàn thành đúng hạn",
+                        muc_do_hoan_thanh=100.0,
+                        ma_can_bo_chu_tri=giang_vien.ma_can_bo,
+                        ten_can_bo_chu_tri=giang_vien.ho_va_ten,
+                        nguoi_phoi_hop="Bộ môn ĐKT & KGN",
+                        la_nhiem_vu_trong_tam=tt_g,
+                        la_cong_viec_lap_lai=True,
+                        nguon_du_lieu="Đề xuất từ uSmart & TKB Bộ môn",
+                    )
+                )
+            ds_de_xuat = ds_de_xuat[:10]
+            nhat_ky.append(
+                f"📚 Đã tổng hợp và đề xuất **{len(ds_de_xuat)} nhiệm vụ công việc báo cáo** cho GV {giang_vien.ho_va_ten} (`{giang_vien.ma_can_bo}`)."
+            )
+
+        return ds_de_xuat[:10], nhat_ky

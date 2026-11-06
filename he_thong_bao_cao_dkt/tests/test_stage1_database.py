@@ -31,15 +31,21 @@ class TestStage1Database(unittest.TestCase):
         self.tmp_dir.cleanup()
 
     def test_01_danh_sach_21_giang_vien(self) -> None:
-        """Đảm bảo có đúng 21 giảng viên Bộ môn Địa kỹ thuật và Không gian ngầm."""
-        self.assertEqual(len(DANH_SACH_GIANG_VIEN_DKT), 21)
+        """Đảm bảo có đúng 22 thành viên Bộ môn Địa kỹ thuật và Không gian ngầm (bao gồm Nguyễn Thị Thanh Giang - 0537)."""
+        self.assertEqual(len(DANH_SACH_GIANG_VIEN_DKT), 22)
         ds_gv = self.db.doc_danh_sach_giang_vien()
-        self.assertEqual(len(ds_gv), 21)
+        self.assertEqual(len(ds_gv), 22)
         self.assertIn("1051", ds_gv)
         self.assertIn("0694", ds_gv)
+        self.assertIn("0537", ds_gv)
+        self.assertNotIn("0799", ds_gv)
         self.assertEqual(ds_gv["1051"].ho_va_ten, "Nguyễn Hải Hà")
         self.assertEqual(ds_gv["1051"].tai_khoan_usmart, "hanh1")
         self.assertEqual(ds_gv["0694"].ho_va_ten, "Trần Thế Truyền")
+        self.assertEqual(ds_gv["0537"].ho_va_ten, "Nguyễn Thị Thanh Giang")
+        self.assertEqual(ds_gv["0537"].tai_khoan_usmart, "giangntt")
+        self.assertEqual(ds_gv["1472"].tai_khoan_usmart, "linhnt2")
+        self.assertEqual(ds_gv["0064"].tai_khoan_usmart, "ducla")
 
     def test_02_doc_bao_cao_ca_nhan_va_ten_file_chuan(self) -> None:
         """Kiểm tra đọc báo cáo tháng 11/2026 của giảng viên Nguyễn Hải Hà (1051)."""

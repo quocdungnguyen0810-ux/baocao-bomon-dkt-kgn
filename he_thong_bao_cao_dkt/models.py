@@ -104,7 +104,7 @@ class ThongTinGiangVien:
         return self.chuc_danh_vi_tri
 
 
-# Danh sách chính thức 21 cán bộ/giảng viên Bộ môn Địa kỹ thuật và Không gian ngầm (trích xuất từ uSmart DonVi=412)
+# Danh sách chính thức 22 cán bộ/giảng viên Bộ môn Địa kỹ thuật và Không gian ngầm & PTN Địa kỹ thuật (uSmart DonVi=412 & 494)
 DANH_SACH_GIANG_VIEN_DKT: List[ThongTinGiangVien] = [
     ThongTinGiangVien("0694", "Trần Thế Truyền", "1978-07-27", "GS", "TS", "Trưởng bộ môn, Giảng viên cao cấp", "truyentt", "truyentt@utc.edu.vn", "Trưởng khoa Công trình", 270.0, 350.0, 180.0),
     ThongTinGiangVien("0882", "Nguyễn Châu Lân", "1981-06-26", "PGS", "TS", "Phó Trưởng bộ môn, Giảng viên cao cấp", "lannc", "lannc@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 350.0, 180.0),
@@ -113,7 +113,7 @@ DANH_SACH_GIANG_VIEN_DKT: List[ThongTinGiangVien] = [
     ThongTinGiangVien("0805", "Trần Thị Thu Hằng", "1980-09-02", "PGS", "TS", "Giảng viên cao cấp", "hangttt", "hangttt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 350.0, 180.0),
     ThongTinGiangVien("1056", "Đặng Hồng Lam", "1981-05-23", "PGS", "TS", "Giảng viên cao cấp", "lamdh", "lamdh@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 350.0, 180.0),
     ThongTinGiangVien("1158", "Nguyễn Công Định", "1983-10-26", "", "TS", "Giảng viên chính", "dinhnc", "dinhnc@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 300.0, 180.0),
-    ThongTinGiangVien("1472", "Nguyễn Thái Linh", "1990-03-30", "", "TS", "Giảng viên", "linhnt", "linhnt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 300.0, 180.0),
+    ThongTinGiangVien("1472", "Nguyễn Thái Linh", "1990-03-30", "", "TS", "Giảng viên", "linhnt2", "thailinhdkt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 300.0, 180.0),
     ThongTinGiangVien("1215", "Nguyễn Đức Vinh", "1984-07-27", "", "TS", "Giảng viên", "vinhnd", "vinhnd@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 300.0, 180.0),
     ThongTinGiangVien("1154", "Nguyễn Anh Tuấn", "1983-11-02", "", "TS", "Giảng viên", "tuanna", "tuanna@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 300.0, 180.0),
     ThongTinGiangVien("0068", "Nguyễn Đức Hạnh", "1974-01-21", "", "TS", "Giảng viên chính", "hanhnd", "hanhnd@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 300.0, 180.0),
@@ -122,12 +122,42 @@ DANH_SACH_GIANG_VIEN_DKT: List[ThongTinGiangVien] = [
     ThongTinGiangVien("1216", "Trần Thị Thu Hiền", "1984-10-20", "", "ThS", "Giảng viên", "hienttt", "hienttt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("0745", "Lê Thị Hồng Vân", "1979-01-30", "", "ThS", "Giảng viên", "vanlth", "vanlth@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("0074", "Võ Thị Hồng Minh", "1969-10-11", "", "ThS", "Giảng viên chính", "minhvth", "minhvth@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
-    ThongTinGiangVien("0064", "Lê Anh Đức", "1974-12-06", "", "ThS", "Giảng viên", "ducla", "ducla@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
+    ThongTinGiangVien("0064", "Lê Anh Đức", "1974-12-06", "", "ThS", "Giảng viên", "ducla", "laduc@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("0837", "Nguyễn Bá Đồng", "1979-04-30", "", "ThS", "Giảng viên", "dongnb", "dongnb@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("0072", "Phạm Thanh Hà", "1972-02-10", "", "ThS", "Giảng viên", "hapt", "hapt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("0067", "Nguyễn Đình Dũng", "1973-12-19", "", "ThS", "Giảng viên", "dungnd", "dungnd@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("1209", "Phạm Thu Trang", "1982-10-09", "", "ThS", "Giảng viên", "trangpt", "trangpt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
+    ThongTinGiangVien("0537", "Nguyễn Thị Thanh Giang", "1980-01-01", "", "ThS", "Giảng viên thực hành, thí nghiệm", "giangntt", "nttgiang@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 210.0, 75.0, 180.0),
 ]
+
+# Từ điển mật khẩu uSmart đã cấu hình sẵn của các thành viên Bộ môn
+MAT_KHAU_USMART_MAC_DINH: dict[str, str] = {
+    "giangntt": "123456",
+    "ducla": "123456",
+    "linhnt2": "30032013",
+    "linhnt": "30032013",
+    "hanh1": "182128",
+    "lannc": "giangchau0310",
+}
+
+
+def lay_mat_khau_usmart_mac_dinh(tai_khoan: str) -> str:
+    """Trả về mật khẩu uSmart mặc định đã cấu hình cho tài khoản (nếu có)."""
+    tk = (tai_khoan or "").strip().lower()
+    return MAT_KHAU_USMART_MAC_DINH.get(tk, "")
+
+
+def tim_ma_can_bo_theo_tai_khoan_usmart(tai_khoan: str) -> Optional[str]:
+    """Ánh xạ tên đăng nhập uSmart (`giangntt`, `ducla`, `linhnt2`, `hanh1`, ...) sang mã cán bộ."""
+    tk = (tai_khoan or "").strip().lower()
+    if not tk:
+        return None
+    if tk == "linhnt":
+        return "1472"
+    for gv in DANH_SACH_GIANG_VIEN_DKT:
+        if gv.tai_khoan_usmart.strip().lower() == tk or gv.ma_can_bo.strip().lower() == tk:
+            return gv.ma_can_bo
+    return None
 
 
 @dataclass

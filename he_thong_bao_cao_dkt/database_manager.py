@@ -15,6 +15,9 @@ Chức năng:
 from datetime import date, datetime
 import logging
 from pathlib import Path
+import shutil
+import tempfile
+import time
 from typing import Dict, List, Optional, Tuple
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -32,6 +35,38 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _luu_csdl_an_toan(wb: openpyxl.Workbook, duong_dan_csdl: Path) -> Path:
+    """
+    Lưu workbook CSDL an toàn qua tệp tạm rồi ghi đè nguyên tử (atomic replace),
+    tự động thử lại nếu OneDrive đang đồng bộ để tránh PermissionError.
+    """
+    duong_dan_csdl = Path(duong_dan_csdl)
+    duong_dan_csdl.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_str = tempfile.mkstemp(suffix=".xlsx", prefix="tmp_csdl_", dir=str(duong_dan_csdl.parent))
+    import os
+    os.close(fd)
+    tmp_path = Path(tmp_str)
+    try:
+        wb.save(tmp_path)
+        for attempt in range(3):
+            try:
+                shutil.move(str(tmp_path), str(duong_dan_csdl))
+                return duong_dan_csdl
+            except PermissionError:
+                if attempt < 2:
+                    time.sleep(0.25)
+                else:
+                    shutil.copyfile(str(tmp_path), str(duong_dan_csdl))
+                    return duong_dan_csdl
+    finally:
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+    return duong_dan_csdl
 
 
 def _parse_date(val: object) -> Optional[date]:
@@ -243,18 +278,30 @@ class QuanLyCSDLBộMôn:
             ],
         )
         for gv in DANH_SACH_GIANG_VIEN_DKT:
-            gd_thang = 36.0 if gv.ma_can_bo != "0694" else 30.0
-            gd_luy_ke = 112.0 if gv.ma_can_bo != "0694" else 95.0
-            nc_thang = 30.0
-            nc_luy_ke = 95.0
+            if gv.ma_can_bo == "0537":
+                gd_thang = 28.0
+                gd_luy_ke = 92.0
+                nc_thang = 10.0
+                nc_luy_ke = 30.0
+            else:
+                gd_thang = 36.0 if gv.ma_can_bo != "0694" else 30.0
+                gd_luy_ke = 112.0 if gv.ma_can_bo != "0694" else 95.0
+                nc_thang = 30.0
+                nc_luy_ke = 95.0
             khac_thang = 20.0
             khac_luy_ke = 60.0
-            sp_khcn = (
-                "Hướng dẫn 05 SV làm Đồ án tốt nghiệp Địa kỹ thuật; hoàn thiện 01 bản thảo bài báo Tạp chí KH GTVT; "
-                "tham gia biên soạn hồ sơ mở ngành Địa kỹ thuật & KGN."
-                if gv.ma_can_bo == "1051"
-                else "Hướng dẫn đồ án môn học Nền móng, đồ án tốt nghiệp và thực hiện đề tài NCKH cấp Trường."
-            )
+            if gv.ma_can_bo == "1051":
+                sp_khcn = (
+                    "Hướng dẫn 05 SV làm Đồ án tốt nghiệp Địa kỹ thuật; hoàn thiện 01 bản thảo bài báo Tạp chí KH GTVT; "
+                    "tham gia biên soạn hồ sơ mở ngành Địa kỹ thuật & KGN."
+                )
+            elif gv.ma_can_bo == "0537":
+                sp_khcn = (
+                    "Hướng dẫn thực hành thí nghiệm Cơ học đất, Cơ học đất đá, Địa chất công trình cho các lớp chính quy; "
+                    "phối hợp xử lý số liệu thí nghiệm phục vụ đề tài NCKH của Bộ môn."
+                )
+            else:
+                sp_khcn = "Hướng dẫn đồ án môn học Nền móng, đồ án tốt nghiệp và thực hiện đề tài NCKH cấp Trường."
             ws_cm.append(
                 [
                     11,
@@ -435,10 +482,112 @@ class QuanLyCSDLBộMôn:
                 "Sổ giao việc Mẫu 03",
             ),
         ]
-        # Tạo thêm nhiệm vụ chuẩn cho 20 giảng viên còn lại để phục vụ tổng hợp Mẫu 02b, 02c, 03c
+        # Tạo thêm nhiệm vụ chuẩn cho các thành viên còn lại để phục vụ tổng hợp Mẫu 02b, 02c, 03c
         stt_nv = 6
         for gv in DANH_SACH_GIANG_VIEN_DKT:
             if gv.ma_can_bo == "1051":
+                continue
+            if gv.ma_can_bo == "0537":
+                nv_giang_list = [
+                    (
+                        f"NV_202611_{stt_nv:03d}",
+                        11,
+                        2026,
+                        gv.ma_can_bo,
+                        gv.ho_va_ten,
+                        "Bộ môn ĐKT & KGN, PTN Công trình",
+                        f"Hướng dẫn thực hành, thí nghiệm các học phần Cơ học đất, Cơ học đất đá, Địa chất công trình cho sinh viên hệ chính quy tháng 11/2026 ({gv.ho_va_ten})",
+                        "Kế hoạch năm học",
+                        "TKB-PTN-2026",
+                        "Hoàn thành 100% các ca hướng dẫn thí nghiệm theo lịch phân công, ký xác nhận sổ nhật ký phòng thí nghiệm và phiếu kết quả thí nghiệm của sinh viên",
+                        date(2026, 11, 1),
+                        date(2026, 11, 30),
+                        date(2026, 11, 28),
+                        "Hoàn thành đúng hạn",
+                        100.0,
+                        "",
+                        True,
+                        True,
+                        "Cao",
+                        "Đạt yêu cầu – tốt",
+                        "",
+                        "Kế hoạch Giảng dạy & PTN",
+                    ),
+                    (
+                        f"NV_202611_{stt_nv + 1:03d}",
+                        11,
+                        2026,
+                        gv.ma_can_bo,
+                        gv.ho_va_ten,
+                        "PTN Địa kỹ thuật - Công trình",
+                        f"Quản lý, kiểm tra định kỳ, bảo dưỡng thiết bị thí nghiệm Cơ học đất - Địa kỹ thuật và chuẩn bị mẫu đất/đá phục vụ giảng dạy, NCKH tháng 11/2026 ({gv.ho_va_ten})",
+                        "Chức năng, nhiệm vụ thường xuyên",
+                        "KH-PTN-DKT",
+                        "Sổ theo dõi vận hành thiết bị PTN, biên bản kiểm tra tình trạng máy nén tam trục, máy cắt phẳng, máy cố kết đảm bảo hoạt động tốt",
+                        date(2026, 11, 1),
+                        date(2026, 11, 28),
+                        date(2026, 11, 26),
+                        "Hoàn thành đúng hạn",
+                        100.0,
+                        "",
+                        True,
+                        True,
+                        "Cao",
+                        "Đạt yêu cầu – tốt",
+                        "",
+                        "Công tác Phòng thí nghiệm",
+                    ),
+                    (
+                        f"NV_202611_{stt_nv + 2:03d}",
+                        11,
+                        2026,
+                        gv.ma_can_bo,
+                        gv.ho_va_ten,
+                        "Nhóm NCKH Bộ môn ĐKT & KGN",
+                        f"Phối hợp thực hiện thí nghiệm chuyên môn phục vụ đề tài NCKH các cấp, NCKH sinh viên và rà soát tài liệu hướng dẫn thí nghiệm Địa kỹ thuật ({gv.ho_va_ten})",
+                        "Kế hoạch năm học",
+                        "KH-NCKH-PTN",
+                        "Bộ số liệu kết quả thí nghiệm mẫu đất/đá trong phòng và tài liệu hướng dẫn thí nghiệm cập nhật",
+                        date(2026, 11, 3),
+                        date(2026, 11, 28),
+                        date(2026, 11, 27),
+                        "Hoàn thành đúng hạn",
+                        100.0,
+                        "",
+                        False,
+                        True,
+                        "Thường",
+                        "Đạt yêu cầu – tốt",
+                        "",
+                        "Kế hoạch NCKH & PTN",
+                    ),
+                    (
+                        f"NV_202611_{stt_nv + 3:03d}",
+                        11,
+                        2026,
+                        gv.ma_can_bo,
+                        gv.ho_va_ten,
+                        "Bộ môn ĐKT & KGN",
+                        f"Tham gia sinh hoạt chuyên môn, họp giao ban định kỳ và công tác coi chấm thi học phần thực hành thí nghiệm tháng 11/2026 ({gv.ho_va_ten})",
+                        "Chức năng, nhiệm vụ thường xuyên",
+                        "BB-BM-DKT",
+                        "Tham gia đầy đủ các buổi họp chuyên môn và hoàn thành bảng điểm đánh giá thí nghiệm học phần đúng quy định",
+                        date(2026, 11, 1),
+                        date(2026, 11, 30),
+                        date(2026, 11, 28),
+                        "Hoàn thành đúng hạn",
+                        100.0,
+                        "",
+                        False,
+                        True,
+                        "Thường",
+                        "Đạt yêu cầu – tốt",
+                        "",
+                        "Nhiệm vụ thường xuyên",
+                    ),
+                ]
+                ds_nv_mau.extend(nv_giang_list)
+                stt_nv += 4
                 continue
             ds_nv_mau.append(
                 (
@@ -548,7 +697,7 @@ class QuanLyCSDLBộMôn:
                 11,
                 2026,
                 "1051",
-                "Vận hành chính thức hệ thống tổng hợp báo cáo công việc tháng 11/2026 cho 21 giảng viên Bộ môn trên uSmart",
+                "Vận hành chính thức hệ thống tổng hợp báo cáo công việc tháng 11/2026 cho Bộ môn trên uSmart",
                 "100% báo cáo Mẫu 01b, 02b, 02c của Bộ môn nộp đúng hạn trước ngày 02-04/12/2026",
                 date(2026, 12, 4),
                 "Bộ môn ĐKT & KGN",
@@ -568,39 +717,277 @@ class QuanLyCSDLBộMôn:
                     if isinstance(cell.value, date):
                         cell.number_format = "dd/mm/yyyy"
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         logger.info("Đã khởi tạo thành công CSDL Bộ môn tại: %s", self.duong_dan_csdl)
         return self.duong_dan_csdl
 
     def doc_danh_sach_giang_vien(self) -> Dict[str, ThongTinGiangVien]:
-        """Đọc danh sách 21 giảng viên từ Sheet DM_GiangVien."""
+        """
+        Đọc danh sách giảng viên chính thức thuộc Bộ môn ĐKT & KGN từ Sheet DM_GiangVien,
+        tự động lọc bỏ các mã cán bộ ngoại lai (0799, 1450, 1451) và đồng bộ bổ sung
+        các thành viên chuẩn từ DANH_SACH_GIANG_VIEN_DKT (bao gồm 0537 - Nguyễn Thị Thanh Giang).
+        """
         self.khoi_tao_csdl_mau_neu_chua_co()
+        map_chuan = {gv.ma_can_bo: gv for gv in DANH_SACH_GIANG_VIEN_DKT}
         wb = openpyxl.load_workbook(self.duong_dan_csdl, data_only=True)
         ws = wb[self.SHEET_GIANG_VIEN]
-        ket_qua: Dict[str, ThongTinGiangVien] = {}
+        ket_qua_raw: Dict[str, ThongTinGiangVien] = {}
         for r in range(2, ws.max_row + 1):
             ma_cb = str(ws.cell(r, 1).value or "").strip()
-            if not ma_cb:
+            if not ma_cb or ma_cb not in map_chuan:
                 continue
+            gv_chuan = map_chuan[ma_cb]
+            tk_sheet = str(ws.cell(r, 7).value or "").strip()
+            # Ưu tiên tài khoản uSmart chuẩn trong models.py nếu sheet đang lưu tên cũ (như linhnt -> linhnt2)
+            tk_usmart = gv_chuan.tai_khoan_usmart if gv_chuan.tai_khoan_usmart else tk_sheet
+            email_sheet = str(ws.cell(r, 8).value or "").strip()
+            email_val = gv_chuan.email if gv_chuan.email else email_sheet
             gv = ThongTinGiangVien(
                 ma_can_bo=ma_cb,
-                ho_va_ten=str(ws.cell(r, 2).value or "").strip(),
-                ngay_sinh=str(ws.cell(r, 3).value or "").strip(),
-                hoc_ham=str(ws.cell(r, 4).value or "").strip(),
-                hoc_vi=str(ws.cell(r, 5).value or "").strip(),
-                chuc_danh_vi_tri=str(ws.cell(r, 6).value or "Giảng viên").strip(),
-                tai_khoan_usmart=str(ws.cell(r, 7).value or "").strip(),
-                email=str(ws.cell(r, 8).value or "").strip(),
+                ho_va_ten=str(ws.cell(r, 2).value or gv_chuan.ho_va_ten).strip(),
+                ngay_sinh=str(ws.cell(r, 3).value or gv_chuan.ngay_sinh).strip(),
+                hoc_ham=str(ws.cell(r, 4).value or gv_chuan.hoc_ham).strip(),
+                hoc_vi=str(ws.cell(r, 5).value or gv_chuan.hoc_vi).strip(),
+                chuc_danh_vi_tri=str(ws.cell(r, 6).value or gv_chuan.chuc_danh_vi_tri).strip(),
+                tai_khoan_usmart=tk_usmart,
+                email=email_val,
                 nguoi_nhan_bao_cao=str(
-                    ws.cell(r, 9).value or NGUOI_NHAN_BAO_CAO_MAC_DINH
+                    ws.cell(r, 9).value or gv_chuan.nguoi_nhan_bao_cao or NGUOI_NHAN_BAO_CAO_MAC_DINH
                 ).strip(),
-                dinh_muc_giang_day=float(ws.cell(r, 10).value or 270.0),
-                dinh_muc_nckh=float(ws.cell(r, 11).value or 250.0),
-                dinh_muc_nhiem_vu_khac=float(ws.cell(r, 12).value or 180.0),
+                dinh_muc_giang_day=float(ws.cell(r, 10).value or gv_chuan.dinh_muc_giang_day),
+                dinh_muc_nckh=float(ws.cell(r, 11).value or gv_chuan.dinh_muc_nckh),
+                dinh_muc_nhiem_vu_khac=float(ws.cell(r, 12).value or gv_chuan.dinh_muc_nhiem_vu_khac),
             )
-            ket_qua[ma_cb] = gv
+            ket_qua_raw[ma_cb] = gv
         wb.close()
+
+        # Giữ đúng thứ tự chuẩn của DANH_SACH_GIANG_VIEN_DKT và bổ sung thành viên mới nếu file CSDL cũ chưa có
+        ket_qua: Dict[str, ThongTinGiangVien] = {}
+        for gv_chuan in DANH_SACH_GIANG_VIEN_DKT:
+            ket_qua[gv_chuan.ma_can_bo] = ket_qua_raw.get(gv_chuan.ma_can_bo, gv_chuan)
         return ket_qua
+
+    def dong_bo_danh_sach_giang_vien_chuan(self, thang: int = 11, nam: int = 2026) -> int:
+        """
+        Đồng bộ danh sách giảng viên chuẩn từ `DANH_SACH_GIANG_VIEN_DKT` vào tệp CSDL hiện có:
+        1. Loại bỏ triệt để các bản ghi ngoại lai không thuộc Bộ môn (như 0799 - Nguyễn Thị Định,
+           1450 - Ngô Thùy Dương, 1451 - Nguyễn Hữu Thuấn) trên toàn bộ các sheet.
+        2. Cập nhật tài khoản uSmart mới nhất (`linhnt2`, `ducla`, `giangntt`...) vào `DM_GiangVien`.
+        3. Tự động khởi tạo dữ liệu chuyên môn và nhiệm vụ chuẩn cho thành viên mới bổ sung
+           (`0537 - Nguyễn Thị Thanh Giang`) nếu chưa có trong kỳ `(thang, nam)`.
+        """
+        self.khoi_tao_csdl_mau_neu_chua_co()
+        map_chuan = {gv.ma_can_bo: gv for gv in DANH_SACH_GIANG_VIEN_DKT}
+        wb = openpyxl.load_workbook(self.duong_dan_csdl)
+
+        # 1. Cập nhật lại Sheet DM_GiangVien theo đúng DANH_SACH_GIANG_VIEN_DKT
+        ws_gv = wb[self.SHEET_GIANG_VIEN]
+        if ws_gv.max_row >= 2:
+            ws_gv.delete_rows(2, ws_gv.max_row - 1)
+        for gv in DANH_SACH_GIANG_VIEN_DKT:
+            ws_gv.append(
+                [
+                    gv.ma_can_bo,
+                    gv.ho_va_ten,
+                    gv.ngay_sinh,
+                    gv.hoc_ham,
+                    gv.hoc_vi,
+                    gv.chuc_danh_vi_tri,
+                    gv.tai_khoan_usmart,
+                    gv.email,
+                    gv.nguoi_nhan_bao_cao,
+                    gv.dinh_muc_giang_day,
+                    gv.dinh_muc_nckh,
+                    gv.dinh_muc_nhiem_vu_khac,
+                ]
+            )
+
+        # 2. Lọc bỏ các mã cán bộ ngoại lai trên Sheet KH_GiangDay_NCKH và bổ sung thành viên còn thiếu
+        ws_cm = wb[self.SHEET_CHUYEN_MON]
+        rows_cm_hop_le = []
+        mcb_da_co_cm = set()
+        for r in range(2, ws_cm.max_row + 1):
+            t = int(ws_cm.cell(r, 1).value or 0)
+            n = int(ws_cm.cell(r, 2).value or 0)
+            mcb = str(ws_cm.cell(r, 3).value or "").strip()
+            if mcb in map_chuan:
+                rows_cm_hop_le.append([ws_cm.cell(r, c).value for c in range(1, 23)])
+                if t == thang and n == nam:
+                    mcb_da_co_cm.add(mcb)
+        if ws_cm.max_row >= 2:
+            ws_cm.delete_rows(2, ws_cm.max_row - 1)
+        for row_vals in rows_cm_hop_le:
+            ws_cm.append(row_vals)
+
+        for gv in DANH_SACH_GIANG_VIEN_DKT:
+            if gv.ma_can_bo not in mcb_da_co_cm:
+                gd_thang = 28.0 if gv.ma_can_bo == "0537" else 36.0
+                gd_luy_ke = 92.0 if gv.ma_can_bo == "0537" else 112.0
+                nc_thang = 10.0 if gv.ma_can_bo == "0537" else 30.0
+                nc_luy_ke = 30.0 if gv.ma_can_bo == "0537" else 95.0
+                sp_khcn = (
+                    "Hướng dẫn thực hành thí nghiệm Cơ học đất, Cơ học đất đá, Địa chất công trình cho các lớp chính quy; "
+                    "phối hợp xử lý số liệu thí nghiệm phục vụ đề tài NCKH của Bộ môn."
+                    if gv.ma_can_bo == "0537"
+                    else "Hướng dẫn đồ án môn học Nền móng, đồ án tốt nghiệp và thực hiện đề tài NCKH cấp Trường."
+                )
+                ws_cm.append(
+                    [
+                        thang,
+                        nam,
+                        gv.ma_can_bo,
+                        gv.ho_va_ten,
+                        gd_thang,
+                        gd_luy_ke,
+                        gv.dinh_muc_giang_day,
+                        "Theo TKB học kỳ I năm học 2026-2027",
+                        nc_thang,
+                        nc_luy_ke,
+                        gv.dinh_muc_nckh,
+                        "Thực hiện đề tài NCKH và thí nghiệm chuyên môn",
+                        20.0,
+                        60.0,
+                        gv.dinh_muc_nhiem_vu_khac,
+                        "Công tác coi chấm thi, trực PTN, sinh hoạt chuyên môn",
+                        sp_khcn,
+                        29.0,
+                        70.0,
+                        None,
+                        None,
+                        "",
+                    ]
+                )
+
+        # 3. Lọc bỏ các mã cán bộ ngoại lai trên Sheet NhiemVu_Thang và bổ sung nhiệm vụ mặc định cho thành viên mới (0537)
+        ws_nv = wb[self.SHEET_NHIEM_VU]
+        rows_nv_hop_le = []
+        mcb_da_co_nv = set()
+        for r in range(2, ws_nv.max_row + 1):
+            t = int(ws_nv.cell(r, 2).value or 0)
+            n = int(ws_nv.cell(r, 3).value or 0)
+            mcb = str(ws_nv.cell(r, 4).value or "").strip()
+            if mcb in map_chuan:
+                rows_nv_hop_le.append([ws_nv.cell(r, c).value for c in range(1, 23)])
+                if t == thang and n == nam:
+                    mcb_da_co_nv.add(mcb)
+        if ws_nv.max_row >= 2:
+            ws_nv.delete_rows(2, ws_nv.max_row - 1)
+        for row_vals in rows_nv_hop_le:
+            ws_nv.append(row_vals)
+
+        so_them_moi = 0
+        if "0537" in map_chuan and "0537" not in mcb_da_co_nv:
+            gv_giang = map_chuan["0537"]
+            cuoi_ky = ngay_cuoi_thang(thang, nam)
+            dau_ky = date(nam, thang, 1)
+            ngay_ht_1 = date(nam, thang, min(28, cuoi_ky.day))
+            ngay_ht_2 = date(nam, thang, min(26, cuoi_ky.day))
+            ngay_ht_3 = date(nam, thang, min(27, cuoi_ky.day))
+            nv_giang_rows = [
+                [
+                    f"NV_{nam}{thang:02d}_0537_01",
+                    thang,
+                    nam,
+                    "0537",
+                    gv_giang.ho_va_ten,
+                    "Bộ môn ĐKT & KGN, PTN Công trình",
+                    f"Hướng dẫn thực hành, thí nghiệm các học phần Cơ học đất, Cơ học đất đá, Địa chất công trình cho sinh viên hệ chính quy tháng {thang:02d}/{nam} ({gv_giang.ho_va_ten})",
+                    "Kế hoạch năm học",
+                    "TKB-PTN-2026",
+                    "Hoàn thành 100% các ca hướng dẫn thí nghiệm theo lịch phân công, ký xác nhận sổ nhật ký phòng thí nghiệm và phiếu kết quả thí nghiệm của sinh viên",
+                    dau_ky,
+                    cuoi_ky,
+                    ngay_ht_1,
+                    "Hoàn thành đúng hạn",
+                    100.0,
+                    "",
+                    True,
+                    True,
+                    "Cao",
+                    "Đạt yêu cầu – tốt",
+                    "",
+                    "Kế hoạch Giảng dạy & PTN",
+                ],
+                [
+                    f"NV_{nam}{thang:02d}_0537_02",
+                    thang,
+                    nam,
+                    "0537",
+                    gv_giang.ho_va_ten,
+                    "PTN Địa kỹ thuật - Công trình",
+                    f"Quản lý, kiểm tra định kỳ, bảo dưỡng thiết bị thí nghiệm Cơ học đất - Địa kỹ thuật và chuẩn bị mẫu đất/đá phục vụ giảng dạy, NCKH tháng {thang:02d}/{nam} ({gv_giang.ho_va_ten})",
+                    "Chức năng, nhiệm vụ thường xuyên",
+                    "KH-PTN-DKT",
+                    "Sổ theo dõi vận hành thiết bị PTN, biên bản kiểm tra tình trạng máy nén tam trục, máy cắt phẳng, máy cố kết đảm bảo hoạt động tốt",
+                    dau_ky,
+                    ngay_ht_1,
+                    ngay_ht_2,
+                    "Hoàn thành đúng hạn",
+                    100.0,
+                    "",
+                    True,
+                    True,
+                    "Cao",
+                    "Đạt yêu cầu – tốt",
+                    "",
+                    "Công tác Phòng thí nghiệm",
+                ],
+                [
+                    f"NV_{nam}{thang:02d}_0537_03",
+                    thang,
+                    nam,
+                    "0537",
+                    gv_giang.ho_va_ten,
+                    "Nhóm NCKH Bộ môn ĐKT & KGN",
+                    f"Phối hợp thực hiện thí nghiệm chuyên môn phục vụ đề tài NCKH các cấp, NCKH sinh viên và rà soát tài liệu hướng dẫn thí nghiệm Địa kỹ thuật ({gv_giang.ho_va_ten})",
+                    "Kế hoạch năm học",
+                    "KH-NCKH-PTN",
+                    "Bộ số liệu kết quả thí nghiệm mẫu đất/đá trong phòng và tài liệu hướng dẫn thí nghiệm cập nhật",
+                    date(nam, thang, min(3, cuoi_ky.day)),
+                    ngay_ht_1,
+                    ngay_ht_3,
+                    "Hoàn thành đúng hạn",
+                    100.0,
+                    "",
+                    False,
+                    True,
+                    "Thường",
+                    "Đạt yêu cầu – tốt",
+                    "",
+                    "Kế hoạch NCKH & PTN",
+                ],
+                [
+                    f"NV_{nam}{thang:02d}_0537_04",
+                    thang,
+                    nam,
+                    "0537",
+                    gv_giang.ho_va_ten,
+                    "Bộ môn ĐKT & KGN",
+                    f"Tham gia sinh hoạt chuyên môn, họp giao ban định kỳ và công tác coi chấm thi học phần thực hành thí nghiệm tháng {thang:02d}/{nam} ({gv_giang.ho_va_ten})",
+                    "Chức năng, nhiệm vụ thường xuyên",
+                    "BB-BM-DKT",
+                    "Tham gia đầy đủ các buổi họp chuyên môn và hoàn thành bảng điểm đánh giá thí nghiệm học phần đúng quy định",
+                    dau_ky,
+                    cuoi_ky,
+                    ngay_ht_1,
+                    "Hoàn thành đúng hạn",
+                    100.0,
+                    "",
+                    False,
+                    True,
+                    "Thường",
+                    "Đạt yêu cầu – tốt",
+                    "",
+                    "Nhiệm vụ thường xuyên",
+                ],
+            ]
+            for r_g in nv_giang_rows:
+                ws_nv.append(r_g)
+                so_them_moi += 1
+
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
+        wb.close()
+        return so_them_moi
 
     def doc_bao_cao_ca_nhan(
         self, ma_can_bo: str, thang: int = 11, nam: int = 2026
@@ -827,7 +1214,7 @@ class QuanLyCSDLBộMôn:
                 da_co.add((mcb, ten_nv))
                 so_ban_ghi_moi += 1
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return so_ban_ghi_moi
 
@@ -882,7 +1269,7 @@ class QuanLyCSDLBộMôn:
             da_co.add((mcb, ten_nv))
             so_chuyen_tiep += 1
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return so_chuyen_tiep
 
@@ -920,7 +1307,7 @@ class QuanLyCSDLBộMôn:
                 nv.nguon_du_lieu,
             ]
         )
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return ma_nv
 
@@ -1157,7 +1544,7 @@ class QuanLyCSDLBộMôn:
                     r_lap = ten_lap_da_co[(ma_can_bo, ten_nv)]
                     ws_lap.cell(r_lap, 9, False)
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return so_luong_luu
 
@@ -1225,7 +1612,7 @@ class QuanLyCSDLBộMôn:
         else:
             ws_cm.append(row_values)
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
 
     def cap_nhat_ke_hoach_thang_toi(
@@ -1275,7 +1662,7 @@ class QuanLyCSDLBộMôn:
             )
             so_luong += 1
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return so_luong
 
@@ -1323,6 +1710,6 @@ class QuanLyCSDLBộMôn:
                     ws_cm.cell(r, 21, d_nv)
                     so_gv_cham += 1
 
-        wb.save(self.duong_dan_csdl)
+        _luu_csdl_an_toan(wb, self.duong_dan_csdl)
         wb.close()
         return so_nv_cap_nhat + so_gv_cham
