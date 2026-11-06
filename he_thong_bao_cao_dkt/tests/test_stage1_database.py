@@ -44,6 +44,8 @@ class TestStage1Database(unittest.TestCase):
         self.assertEqual(ds_gv["0694"].ho_va_ten, "Trần Thế Truyền")
         self.assertEqual(ds_gv["0537"].ho_va_ten, "Nguyễn Thị Thanh Giang")
         self.assertEqual(ds_gv["0537"].tai_khoan_usmart, "giangntt")
+        self.assertEqual(ds_gv["0537"].ten_don_vi, "Trung tâm KHCN GTVT")
+        self.assertEqual(ds_gv["0537"].nguoi_nhan_bao_cao, "Lương Xuân Chiểu")
         self.assertEqual(ds_gv["1472"].tai_khoan_usmart, "linhnt2")
         self.assertEqual(ds_gv["0064"].tai_khoan_usmart, "ducla")
 

@@ -125,6 +125,25 @@ class TestStage3Generators(unittest.TestCase):
         self.assertIn("HOẠT ĐỘNG CHUYÊN MÔN", full_text)
         self.assertGreaterEqual(len(doc.tables), 4)
 
+        # Kiểm tra riêng đối với Nguyễn Thị Thanh Giang (0537): Đơn vị = Trung tâm KHCN GTVT, Trưởng đơn vị = Lương Xuân Chiểu
+        bc_giang = self.db.doc_bao_cao_ca_nhan("0537", thang=11, nam=2026)
+        f_giang_xlsx = self.excel_gen.xuat_mau_01_ca_nhan(bc_giang, self.out_dir, cap_nhat_ca_bc_tuan=True)
+        wb_g = openpyxl.load_workbook(f_giang_xlsx, data_only=False)
+        self.assertEqual(wb_g["BC tháng"]["A2"].value, "ĐƠN VỊ: TRUNG TÂM KHCN GTVT")
+        self.assertEqual(wb_g["BC tháng"]["C9"].value, "Lương Xuân Chiểu")
+        self.assertEqual(wb_g["BC tuần"]["A2"].value, "ĐƠN VỊ: TRUNG TÂM KHCN GTVT")
+        self.assertEqual(wb_g["BC tuần"]["C9"].value, "Lương Xuân Chiểu")
+        wb_g.close()
+
+        f_giang_docx = self.docx_gen.xuat_docx_ca_nhan_01b(bc_giang, self.out_dir)
+        doc_g = docx.Document(f_giang_docx)
+        text_g = "\n".join(p.text for p in doc_g.paragraphs)
+        tbl_text_g = "\n".join(c.text for t in doc_g.tables for r in t.rows for c in r.cells)
+        self.assertIn("Trung tâm KHCN GTVT", text_g)
+        self.assertIn("Lương Xuân Chiểu", text_g)
+        self.assertIn("TRUNG TÂM KHCN GTVT", tbl_text_g)
+        self.assertIn("Lương Xuân Chiểu", tbl_text_g)
+
 
 if __name__ == "__main__":
     unittest.main()

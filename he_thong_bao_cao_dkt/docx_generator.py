@@ -46,7 +46,9 @@ def _chuyen_kho_a4_ngang(doc: docx.Document) -> None:
     section.right_margin = Cm(1.8)
 
 
-def _them_quoc_hieu_tieu_ngu(doc: docx.Document, ma_mau: str = "Mẫu 01b") -> None:
+def _them_quoc_hieu_tieu_ngu(
+    doc: docx.Document, ma_mau: str = "Mẫu 01b", ten_don_vi: str = TEN_DON_VI_CHUAN
+) -> None:
     """Thêm bảng tiêu đề Quốc hiệu - Tiêu ngữ chuẩn văn bản hành chính Trường ĐH GTVT."""
     tbl = doc.add_table(rows=1, cols=2)
     tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -58,7 +60,7 @@ def _them_quoc_hieu_tieu_ngu(doc: docx.Document, ma_mau: str = "Mẫu 01b") -> N
     r1 = p1.add_run("TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI\n")
     r1.bold = False
     r1.font.size = Pt(11)
-    r2 = p1.add_run(f"{TEN_DON_VI_CHUAN.upper()}")
+    r2 = p1.add_run(f"{(ten_don_vi or TEN_DON_VI_CHUAN).upper()}")
     r2.bold = True
     r2.font.size = Pt(11)
 
@@ -86,10 +88,11 @@ class BoSinhBaoCaoDocx:
         thu_muc_xuat.mkdir(parents=True, exist_ok=True)
         duong_dan_xuat = thu_muc_xuat / (ten_file_tuy_chinh or bao_cao.ten_file_docx_chuan)
 
+        ten_dv_ca_nhan = getattr(bao_cao.giang_vien, "ten_don_vi", TEN_DON_VI_CHUAN) or TEN_DON_VI_CHUAN
         doc = docx.Document()
         _thiet_lap_font_mac_dinh(doc)
         _chuyen_kho_a4_ngang(doc)
-        _them_quoc_hieu_tieu_ngu(doc, ma_mau="Mẫu 01b")
+        _them_quoc_hieu_tieu_ngu(doc, ma_mau="Mẫu 01b", ten_don_vi=ten_dv_ca_nhan)
 
         p_title = doc.add_paragraph()
         p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -112,7 +115,9 @@ class BoSinhBaoCaoDocx:
         p_info.add_run(f"{bao_cao.giang_vien.ma_can_bo}\t\t")
         p_info.add_run("Vị trí việc làm, chức danh: ").bold = True
         p_info.add_run(f"{bao_cao.giang_vien.chuc_danh_day_du}\n")
-        p_info.add_run("Người nhận báo cáo: ").bold = True
+        p_info.add_run("Đơn vị: ").bold = True
+        p_info.add_run(f"{ten_dv_ca_nhan}\t\t")
+        p_info.add_run("Người nhận báo cáo (Trưởng đơn vị): ").bold = True
         p_info.add_run(f"{bao_cao.giang_vien.nguoi_nhan_bao_cao}")
 
         # Mục I. Kết quả thực hiện nhiệm vụ trong tháng

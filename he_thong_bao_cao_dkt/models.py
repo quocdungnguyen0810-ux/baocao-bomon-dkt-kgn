@@ -89,6 +89,7 @@ class ThongTinGiangVien:
     dinh_muc_giang_day: float = 270.0
     dinh_muc_nckh: float = 300.0
     dinh_muc_nhiem_vu_khac: float = 180.0
+    ten_don_vi: str = TEN_DON_VI_CHUAN
 
     @property
     def ten_viet_tat_khong_dau(self) -> str:
@@ -127,7 +128,7 @@ DANH_SACH_GIANG_VIEN_DKT: List[ThongTinGiangVien] = [
     ThongTinGiangVien("0072", "Phạm Thanh Hà", "1972-02-10", "", "ThS", "Giảng viên", "hapt", "hapt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("0067", "Nguyễn Đình Dũng", "1973-12-19", "", "ThS", "Giảng viên", "dungnd", "dungnd@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
     ThongTinGiangVien("1209", "Phạm Thu Trang", "1982-10-09", "", "ThS", "Giảng viên", "trangpt", "trangpt@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 270.0, 250.0, 180.0),
-    ThongTinGiangVien("0537", "Nguyễn Thị Thanh Giang", "1980-01-01", "", "ThS", "Giảng viên thực hành, thí nghiệm", "giangntt", "nttgiang@utc.edu.vn", NGUOI_NHAN_BAO_CAO_MAC_DINH, 210.0, 75.0, 180.0),
+    ThongTinGiangVien("0537", "Nguyễn Thị Thanh Giang", "1980-01-01", "", "ThS", "Giảng viên thực hành, thí nghiệm", "giangntt", "nttgiang@utc.edu.vn", "Lương Xuân Chiểu", 210.0, 75.0, 180.0, "Trung tâm KHCN GTVT"),
 ]
 
 # Từ điển mật khẩu uSmart đã cấu hình sẵn của các thành viên Bộ môn

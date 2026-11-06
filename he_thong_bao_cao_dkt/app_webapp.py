@@ -637,9 +637,10 @@ def hien_thi_phan_he_giang_vien(
         cw2.metric("Đến ngày (cuối kỳ = C5 + 4)", den_ngay_tuan.strftime("%d/%m/%Y"))
         cw3.metric("Tuần số (=WEEKNUM(C5,2))", f"Tuần {tuan_so}")
 
+        ten_dv_gv = getattr(bc.giang_vien, "ten_don_vi", TEN_DON_VI_CHUAN) or TEN_DON_VI_CHUAN
         with st.container(border=True):
             col_hdr_l, col_hdr_r = st.columns([4, 1])
-            col_hdr_l.markdown(f"**TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI**  \n**ĐƠN VỊ: {TEN_DON_VI_CHUAN.upper()}**")
+            col_hdr_l.markdown(f"**TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI**  \n**ĐƠN VỊ: {ten_dv_gv.upper()}**")
             col_hdr_r.markdown("<div style='text-align:right;'><span class='form-badge'>Mẫu 01a</span></div>", unsafe_allow_html=True)
             st.markdown(
                 "<h4 style='text-align:center; color:#0f2d59; margin-top:4px; margin-bottom:6px;'>"
@@ -654,10 +655,11 @@ def hien_thi_phan_he_giang_vien(
             )
             info2.markdown(
                 f"- **Họ và tên:** **{bc.giang_vien.ho_va_ten}** (`{bc.giang_vien.ma_can_bo}`)  \n"
-                f"- **Vị trí việc làm, chức danh:** {bc.giang_vien.chuc_danh_day_du}"
+                f"- **Vị trí việc làm, chức danh:** {bc.giang_vien.chuc_danh_day_du}  \n"
+                f"- **Đơn vị:** **{ten_dv_gv}**"
             )
             info3.markdown(
-                f"- **Người nhận báo cáo:** **{bc.giang_vien.nguoi_nhan_bao_cao}**  \n"
+                f"- **Trưởng đơn vị / Người nhận báo cáo:** **{bc.giang_vien.nguoi_nhan_bao_cao}**  \n"
                 f"- **Biểu mẫu gốc:** Sheet `BC tuần` (`{bc.ten_file_xlsx_chuan}`)"
             )
 
@@ -822,11 +824,12 @@ def hien_thi_phan_he_giang_vien(
     # =========================================================================
     # TRƯỜNG HỢP 2: MẪU 01B — BÁO CÁO KẾT QUẢ CÔNG VIỆC THÁNG VÀ TỰ CHẤM ĐIỂM
     # =========================================================================
+    ten_dv_gv = getattr(bc.giang_vien, "ten_don_vi", TEN_DON_VI_CHUAN) or TEN_DON_VI_CHUAN
     with st.container(border=True):
         col_hdr_l, col_hdr_r = st.columns([4, 1])
         col_hdr_l.markdown(
             f"**TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI**  \n"
-            f"**ĐƠN VỊ: {TEN_DON_VI_CHUAN.upper()}**"
+            f"**ĐƠN VỊ: {ten_dv_gv.upper()}**"
         )
         col_hdr_r.markdown("<div style='text-align:right;'><span class='form-badge'>Mẫu 01b</span></div>", unsafe_allow_html=True)
         st.markdown(
@@ -842,10 +845,11 @@ def hien_thi_phan_he_giang_vien(
         )
         info2.markdown(
             f"- **Họ và tên:** **{bc.giang_vien.ho_va_ten}** (`{bc.giang_vien.ma_can_bo}`)  \n"
-            f"- **Vị trí việc làm, chức danh:** {bc.giang_vien.chuc_danh_day_du}"
+            f"- **Vị trí việc làm, chức danh:** {bc.giang_vien.chuc_danh_day_du}  \n"
+            f"- **Đơn vị:** **{ten_dv_gv}**"
         )
         info3.markdown(
-            f"- **Người nhận báo cáo:** **{bc.giang_vien.nguoi_nhan_bao_cao}**  \n"
+            f"- **Trưởng đơn vị / Người nhận báo cáo:** **{bc.giang_vien.nguoi_nhan_bao_cao}**  \n"
             f"- **Tệp xuất chuẩn:** `{bc.ten_file_xlsx_chuan}`"
         )
 

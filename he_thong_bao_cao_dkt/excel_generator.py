@@ -139,8 +139,9 @@ class BoSinhBaoCaoExcel:
         normal_font = Font(name="Times New Roman", size=11, italic=False, color="000000")
 
         # ---------------- 1. Điền Sheet "BC tháng" (Mẫu 01b) ----------------
+        ten_dv_ca_nhan = getattr(bao_cao.giang_vien, "ten_don_vi", TEN_DON_VI_CHUAN) or TEN_DON_VI_CHUAN
         ws_thang = wb["BC tháng"]
-        ws_thang["A2"] = f"ĐƠN VỊ: {TEN_DON_VI_CHUAN.upper()}"
+        ws_thang["A2"] = f"ĐƠN VỊ: {ten_dv_ca_nhan.upper()}"
         ws_thang["C5"] = bao_cao.thang
         ws_thang["E5"] = bao_cao.nam
         # Ô G5 giữ nguyên công thức: =IF(OR(C5="",E5=""),"",DATE(E5,C5+1,0))
@@ -240,7 +241,7 @@ class BoSinhBaoCaoExcel:
             ws_tuan = wb["BC tuần"]
             tu_ngay_tuan = ngay_thu_hai_tuan or date(bao_cao.nam, bao_cao.thang, 2)
             den_ngay_tuan = tu_ngay_tuan + timedelta(days=4)
-            ws_tuan["A2"] = f"ĐƠN VỊ: {TEN_DON_VI_CHUAN.upper()}"
+            ws_tuan["A2"] = f"ĐƠN VỊ: {ten_dv_ca_nhan.upper()}"
             ws_tuan["C5"] = tu_ngay_tuan
             ws_tuan["C7"] = bao_cao.giang_vien.ho_va_ten
             ws_tuan["C8"] = bao_cao.giang_vien.chuc_danh_day_du

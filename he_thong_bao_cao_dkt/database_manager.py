@@ -810,6 +810,11 @@ class QuanLyCSDLBộMôn:
             tk_usmart = gv_chuan.tai_khoan_usmart if gv_chuan.tai_khoan_usmart else tk_sheet
             email_sheet = str(ws.cell(r, 8).value or "").strip()
             email_val = gv_chuan.email if gv_chuan.email else email_sheet
+            nguoi_nhan_sheet = str(ws.cell(r, 9).value or "").strip()
+            if ma_cb == "0537" and nguoi_nhan_sheet in ("", NGUOI_NHAN_BAO_CAO_MAC_DINH):
+                nguoi_nhan_val = gv_chuan.nguoi_nhan_bao_cao
+            else:
+                nguoi_nhan_val = nguoi_nhan_sheet or gv_chuan.nguoi_nhan_bao_cao or NGUOI_NHAN_BAO_CAO_MAC_DINH
             gv = ThongTinGiangVien(
                 ma_can_bo=ma_cb,
                 ho_va_ten=str(ws.cell(r, 2).value or gv_chuan.ho_va_ten).strip(),
@@ -819,12 +824,11 @@ class QuanLyCSDLBộMôn:
                 chuc_danh_vi_tri=str(ws.cell(r, 6).value or gv_chuan.chuc_danh_vi_tri).strip(),
                 tai_khoan_usmart=tk_usmart,
                 email=email_val,
-                nguoi_nhan_bao_cao=str(
-                    ws.cell(r, 9).value or gv_chuan.nguoi_nhan_bao_cao or NGUOI_NHAN_BAO_CAO_MAC_DINH
-                ).strip(),
+                nguoi_nhan_bao_cao=nguoi_nhan_val,
                 dinh_muc_giang_day=float(ws.cell(r, 10).value or gv_chuan.dinh_muc_giang_day),
                 dinh_muc_nckh=float(ws.cell(r, 11).value or gv_chuan.dinh_muc_nckh),
                 dinh_muc_nhiem_vu_khac=float(ws.cell(r, 12).value or gv_chuan.dinh_muc_nhiem_vu_khac),
+                ten_don_vi=gv_chuan.ten_don_vi,
             )
             ket_qua_raw[ma_cb] = gv
         wb.close()
